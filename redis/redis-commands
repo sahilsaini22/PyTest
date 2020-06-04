@@ -1,0 +1,16 @@
+zadd trending 1 "song1"
+zadd trending 2 "song2"
+zadd trending 3 "song3"
+zadd trending 4 "song4"
+zadd trending 5 "song5"
+
+zrange trending 0 -1
+zrevrange trending 0 -1
+zrevrange trending 0 -1 withscores
+zrevrange trending 0 3
+zrevrank trending "song3"
+
+zscore trending "song5"
+
+zincrby trending -1 "song5"
+zincrby trending 2 "song5"
