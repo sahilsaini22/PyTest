@@ -42,34 +42,59 @@
             </div>
         </nav>
 
-        <div class="container">
+        <div class="container" style="padding-bottom: 56px;">
+            {{#if queue}}
+            <div class="py-3">
+                <h2>Play Queue</h2>
+                <ul class="list-group list-group-horizontal overflow-auto">
+                    {{#each queue}}
+                    <li class="list-group-item list-group-item-action">
+                        {{this.title}} ({{this.year}})
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
 
-            <h2 class="pt-3">Play songs</h2>
-
-            <ul class="list-group list-group-horizontal overflow-auto">
-                {{#each songs}}
-                <li class="list-group-item list-group-item-action">
-                    {{this.title}} ({{this.year}})
-                    <a href="/play/{{this._id}}">play</a>
-                    <a href="/like/{{this._id}}">like</a>
-                </li>
-                {{/each}}
-            </ul>
-
-            <h2 class="pt-3">Top 10 Trending Songs</h2>
-
-            <ul class="list-group list-group-horizontal overflow-auto">
-                {{#each trending}}
-                <li class="list-group-item list-group-item-action">
-                    {{this.title}} ({{this.year}})
-                    <a href="/play/{{this._id}}">play</a>
-                    <a href="/like/{{this._id}}">like</a>
-                </li>
-                {{/each}}
-            </ul>
+            <div class="py-3">
+                <h2>Play songs</h2>
+                <ul class="list-group list-group-horizontal overflow-auto">
+                    {{#each songs}}
+                    <li class="list-group-item list-group-item-action">
+                        {{this.title}} ({{this.year}})
+                        <a href="/play/{{this._id}}">play</a>
+                        <a href="/like/{{this._id}}">like</a>
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
             
+            <div class="py-3">
+                <h2>Top 10 Trending Songs</h2>
+                <ul class="list-group list-group-horizontal overflow-auto">
+                    {{#each trending}}
+                    <li class="list-group-item list-group-item-action">
+                        {{this.title}} ({{this.year}})
+                        <a href="/play/{{this._id}}">play</a>
+                        <a href="/like/{{this._id}}">like</a>
+                    </li>
+                    {{/each}}
+                </ul>
+            </div> 
             {{{ body }}}
         </div>
+
+        <nav
+            class="navbar navbar-expand-lg navbar-light bg-light"
+            style="position: fixed; bottom: 0; width: 100%; z-index: 99999"
+        >
+            <div class="container">
+                {{#if nowPlaying}}
+                <p>nowPlaying: {{ nowPlaying }}</p>
+                {{/if}}
+                <p>Now Playing: {{queue.0.title}} ({{queue.0.year}})</p>
+            </div> 
+        </nav>
 
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>

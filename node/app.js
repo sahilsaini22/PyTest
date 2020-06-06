@@ -1,11 +1,12 @@
 const express = require('express')
 const expressHandlebars = require('express-handlebars');
+const cors = require('cors');
 const path = require('path');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const redis = require('redis');
 const app = express();
-const port = 3000;
+const port = 4000;
 
 const ObjectId = require('mongodb').ObjectID;
 const MongoClient = require('mongodb').MongoClient;
@@ -29,26 +30,106 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(methodOverride('_method')); 
+app.use(cors());
 
-app.get('/', async (req, res, next) => {
+app.get('/songs', async (req, res) => {
     const _songs = await client.db("MUSICDB").collection("songs").find();
     const songs = await _songs.toArray();
+    if (songs) {
+        return res.json({
+            data: songs
+        });
+    } else {
+        return null;
+    }
+});
 
-    let trending;
-    redisClient.zrevrange("trending", 0, 9, async (err, res) => {
-        trending = await Promise.all(res.map(songID => getSong(songID)));
-        render();
+app.get('/trendingSongs', async (req, res) => {
+    redisClient.zrevrange("trending", 0, 9, async (err, trendingSongIDs) => {
+        const trendingSongs = await Promise.all(trendingSongIDs.map(songID => getSong(songID)))
+        if (trendingSongs) {
+            return res.json({
+                data: trendingSongs
+            });    
+        } else {
+            return null;
+        }
     });
+});
 
-    const render = () => {
-        res.render('home', {songs, trending});
-    };
+app.get('/queue', async (req, res) => {
+    redisClient.lrange("queue:1000", 0, -1, async (err, queueIDs) => {
+        const queue = await Promise.all(queueIDs.map(songID => getSong(songID)));
+        if (queue) {
+            return res.json({
+                data: queue
+            });    
+        } else {
+            return null;
+        }
+    });
+});
+
+app.get('/nowPlaying', async (req, res) => {
+    redisClient.hget("user:1000", "nowPlaying", async (err, nowPlayingID) => {
+        if (nowPlayingID) {
+            return res.json({
+                data: nowPlayingID
+            });    
+        } else {
+            return null;
+        } 
+    });
+});
+
+// app.get('/', async (req, res, next) => {
+//     const _songs = await client.db("MUSICDB").collection("songs").find();
+//     const songs = await _songs.toArray();
+
+//     let trending;
+//     redisClient.zrevrange("trending", 0, 9, async (err, res) => {
+//         trending = await Promise.all(res.map(songID => getSong(songID)));
+//         console.log('trending');
+//         // res.render('trending', {trending});
+//     });
+
+//     // TODO: update user id
+//     let queue;
+//     redisClient.lrange("queue:1000", 0, -1, async (err, res) => {
+//         queue = await Promise.all(res.map(songID => getSong(songID)));
+//         console.log('queue');
+//     });
+
+//     let nowPlaying;
+//     redisClient.hget("user:1000", "nowPlaying", async (err, res) => {
+//         console.log('res');
+//         // if (res) {
+//         //     nowPlaying = await Promise.all(res.map(songID => getSong(songID)));
+//         // }
+//         // render();
+//     });
+
+//     // const render = () => {
+//     //     res.render('home', {songs, trending, queue});
+//     // };
+// });
+
+app.get('/song/:_id', async (req, res) => {
+    const _id = req.params._id;
+    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(_id) });
+    if (song) {
+        // console.log(song);
+        return song;
+    } else {
+        console.log('No song found with id: ' + id);
+        return null;
+    }
 });
 
 const getSong = async (id) => {
     const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
     if (song) {
-        console.log(song);
+        // console.log(song);
         return song;
     } else {
         console.log('No song found with id: ' + id);
@@ -58,8 +139,17 @@ const getSong = async (id) => {
 
 app.get('/play/:_id', (req, res) => {
     const _id = req.params._id;
+
+    // HSET user:1000 password 12345
+    // RPUSH mylist c
+
+    // TODO: replace with user id
+    redisClient.lpush("queue:1000", _id, (err, res) => {});
+    redisClient.hset("user:1000", "nowPlaying", 0, (err, res) => {});
+
     redisClient.zincrby("trending", 1, _id, (err, res) => {});
-    res.redirect('/');
+    // return null;
+    res.redirect('/nowPlaying');
 });
 
 app.get('/like/:_id', (req, res) => {
