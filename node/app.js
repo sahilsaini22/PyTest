@@ -16,18 +16,33 @@ client.connect()
 })
 .catch(error => console.error(error));
 
+let redisClient = redis.createClient();
+redisClient.on('connect', () => {
+    console.log('Connected to Redis');
+});
+
 app.engine('handlebars', expressHandlebars({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use(methodOverride('_method'));
+app.use(methodOverride('_method')); 
 
 app.get('/', async (req, res, next) => {
     const _songs = await client.db("MUSICDB").collection("songs").find();
     const songs = await _songs.toArray();
-    res.render('home', {songs});
+
+    redisClient.zrevrange("trending", 0, -1, (err, trending) => {
+        res.render('home', {songs, trending});
+    });
+});
+
+app.get('/song/:_id', (req, res) => {
+    const _id = req.params._id;
+    // zincrby trending -1 "song5"
+    redisClient.zincrby("trending", 1, _id, (err, res) => {});
+    res.redirect('/');
 });
 
 app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
