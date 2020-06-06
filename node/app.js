@@ -58,8 +58,13 @@ const getSong = async (id) => {
 
 app.get('/play/:_id', (req, res) => {
     const _id = req.params._id;
-    // zincrby trending -1 "song5"
     redisClient.zincrby("trending", 1, _id, (err, res) => {});
+    res.redirect('/');
+});
+
+app.get('/like/:_id', (req, res) => {
+    const _id = req.params._id;
+    redisClient.zincrby("trending", 2, _id, (err, res) => {});
     res.redirect('/');
 });
 
