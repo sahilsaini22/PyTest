@@ -7,6 +7,7 @@ const redis = require('redis');
 const app = express();
 const port = 3000;
 
+const ObjectId = require('mongodb').ObjectID;
 const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb+srv://musicdbuser1:root@musicdbcluster-s6hji.azure.mongodb.net/MUSICDB?retryWrites=true&w=majority";
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -33,12 +34,29 @@ app.get('/', async (req, res, next) => {
     const _songs = await client.db("MUSICDB").collection("songs").find();
     const songs = await _songs.toArray();
 
-    redisClient.zrevrange("trending", 0, -1, (err, trending) => {
-        res.render('home', {songs, trending});
+    let trending;
+    redisClient.zrevrange("trending", 0, 9, async (err, res) => {
+        trending = await Promise.all(res.map(songID => getSong(songID)));
+        render();
     });
+
+    const render = () => {
+        res.render('home', {songs, trending});
+    };
 });
 
-app.get('/song/:_id', (req, res) => {
+const getSong = async (id) => {
+    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
+    if (song) {
+        console.log(song);
+        return song;
+    } else {
+        console.log('No song found with id: ' + id);
+        return null;
+    }
+};
+
+app.get('/play/:_id', (req, res) => {
     const _id = req.params._id;
     // zincrby trending -1 "song5"
     redisClient.zincrby("trending", 1, _id, (err, res) => {});

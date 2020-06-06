@@ -48,18 +48,18 @@
 
             <div class="list-group list-group-horizontal overflow-auto">
                 {{#each songs}}
-                <a href="/song/{{this._id}}" class="list-group-item list-group-item-action">
+                <a href="/play/{{this._id}}" class="list-group-item list-group-item-action">
                     {{this.title}} ({{this.year}})
                 </a>
                 {{/each}}
             </div>
 
-            <h2 class="pt-3">Trending</h2>
+            <h2 class="pt-3">Top 10 Trending Songs</h2>
 
             <div class="list-group list-group-horizontal overflow-auto">
                 {{#each trending}}
-                <a href="{{this}}" class="list-group-item list-group-item-action">
-                    {{this}}
+                <a href="/play/{{this._id}}" class="list-group-item list-group-item-action">
+                    {{this.title}} ({{this.year}})
                 </a>
                 {{/each}}
             </div>
