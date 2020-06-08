@@ -2,17 +2,18 @@ import React from 'react';
 
 const TrendingSongs = (props) => {
     if (props) {
+        console.log(props)
         let trendingSongs = props.trendingSongs.map(({_id, title, year}) => 
-            <li className="list-group-item list-group-item-action" key={_id}>
+            <li class="list-group-item list-group-item-action" key={_id}>
                 {title} ({year})
                 <p><a href={'/play/' + _id}>play</a> <a href={'/like/' + _id}>like</a></p>
             </li>        
         );
         
         return (
-            <div className="py-3">
+            <div class="py-3">
                 <h2>Top 10 Trending Songs</h2>
-                <ul className="list-group list-group-horizontal overflow-auto">
+                <ul class="list-group list-group-horizontal overflow-auto">
                     {trendingSongs}
                 </ul>
             </div> 

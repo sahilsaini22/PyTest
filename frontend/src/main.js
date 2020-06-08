@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import AppNavbar from './components/auth/AppNavbar.js';
-import Tracks from './components/Tracks.js';
-import { Provider } from 'react-redux';
-import store from './store';
+import Navbar from './navbar.js';
+import NowPlaying from './nowPlaying.js';
+import Songs from './songs.js';
+import TrendingSongs from './trendingSongs.js';
 
 class Main extends Component {
     constructor(props) {
@@ -57,22 +57,38 @@ class Main extends Component {
         .catch(err => console.error(err));
         this.getQueue();
     }
-    
-    render() {
-       // const { isAuthenticated, user, country } = this.props.auth;        
 
+    render() {
         return (
             <>
-                <Provider store={store}> 
-                    <AppNavbar />
-                    <Tracks
+
+                <Navbar />
+
+                <div class="container pb-56">
+                    {/* <!-- {{#if queue}}
+                    <div class="py-3">
+                        <h2>Play Queue</h2>
+                        <ul class="list-group list-group-horizontal overflow-auto">
+                            {{#each queue}}
+                            <li class="list-group-item list-group-item-action">
+                                {{this.title}} ({{this.year}})
+                            </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                    {{/if}} --> */}
+
+                    <Songs
                         songs={this.state.songs}
-                        trendingSongs={this.state.trendingSongs}
-                        queue={this.state.queue}
-                        nowPlaying={this.state.nowPlaying}
                         handlePlay={this.handlePlay}
                     />
-                </Provider>
+                    <TrendingSongs trendingSongs={this.state.trendingSongs} />
+                </div>
+
+                <NowPlaying
+                    nowPlaying={this.state.nowPlaying}
+                    queue={this.state.queue}
+                />
             </>
         );
     }
