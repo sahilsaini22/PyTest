@@ -23,6 +23,25 @@ redisClient.on('connect', () => {
     console.log('Connected to Redis');
 });
 
+const mongoose = require('mongoose');
+const MONGO_URI = "mongodb+srv://musicdbuser1:root@musicdbcluster-s6hji.azure.mongodb.net/MUSICDB?retryWrites=true&w=majority";
+
+const db = `${MONGO_URI}`;
+
+//const userRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
+
+mongoose
+  .connect(db, {
+    useNewUrlParser: true,
+    useCreateIndex: true,    
+    useUnifiedTopology: true
+  }) // Adding new mongo url parser
+  .then(() => console.log('Connected to Mongoose'))
+  .catch(err => console.log(err));
+ // app.use('/users', userRoutes);
+  app.use('/auth', authRoutes);
+
 app.engine('handlebars', expressHandlebars({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
 
@@ -31,6 +50,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(methodOverride('_method')); 
 app.use(cors());
+
+
+//start of changes  (001) - authentication - Sahil
+//const userRoutes = require('./routes/api/users');
+//end of changes (001) - authentication - Sahil
+
 
 app.get('/songs', async (req, res) => {
     const _songs = await client.db("MUSICDB").collection("songs").find();
@@ -81,6 +106,9 @@ app.get('/nowPlaying', async (req, res) => {
         } 
     });
 });
+
+
+
 
 // app.get('/', async (req, res, next) => {
 //     const _songs = await client.db("MUSICDB").collection("songs").find();
