@@ -58,7 +58,8 @@ class Main extends Component {
     handlePlay = (songId) => {
         let body = JSON.stringify({
             _songId: songId,
-            _userId: this.state.userId
+            _userId: this.state.userId,
+            nowPlaying: this.state.nowPlaying
         });
 
         fetch('http://localhost:4000/play', {
@@ -70,10 +71,53 @@ class Main extends Component {
         })
         .then(response => response.json())
         .then(response => {
+            this.setState({ nowPlaying: response.data }, () => {
+                this.getQueue();
+            })
+        })
+        .catch(err => console.error(err));
+    }
+
+    handleSkip = (songId) => {
+        let body = JSON.stringify({
+            _songId: songId,
+            _userId: this.state.userId,
+            nowPlaying: this.state.nowPlaying
+        });
+
+        fetch('http://localhost:4000/skip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
             this.setState({ nowPlaying: response.data })
         })
         .catch(err => console.error(err));
-        this.getQueue();
+    }
+
+    handlePrevious = (songId) => {
+        let body = JSON.stringify({
+            _songId: songId,
+            _userId: this.state.userId,
+            nowPlaying: this.state.nowPlaying
+        });
+
+        fetch('http://localhost:4000/previous', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            this.setState({ nowPlaying: response.data })
+        })
+        .catch(err => console.error(err));
     }
 
     render() {
@@ -106,6 +150,8 @@ class Main extends Component {
                 <NowPlaying
                     nowPlaying={this.state.nowPlaying}
                     queue={this.state.queue}
+                    handleSkip={this.handleSkip}
+                    handlePrevious={this.handlePrevious}
                 />
             </>
         );

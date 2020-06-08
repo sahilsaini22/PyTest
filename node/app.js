@@ -76,15 +76,114 @@ app.get('/nowPlaying/:_userId', async (req, res) => {
     const _userId = req.params._userId;
     const listKey = "user:" + _userId;
     redisClient.hget(listKey, "nowPlaying", async (err, nowPlayingID) => {
-        if (nowPlayingID) {
-            return res.json({
-                data: nowPlayingID
-            });    
-        } else {
-            return null;
-        } 
+        return res.json({
+            data: nowPlayingID
+        });
     });
 });
+
+app.get('/song/:_id', async (req, res) => {
+    const _id = req.params._id;
+    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(_id) });
+    if (song) {
+        return song;
+    } else {
+        console.log('No song found with id: ' + id);
+        return null;
+    }
+});
+
+const getSong = async (id) => {
+    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
+    if (song) {
+        return song;
+    } else {
+        console.log('No song found with id: ' + id);
+        return null;
+    }
+};
+
+app.post('/play', (req, res) => {
+    const _songId = req.body._songId;
+    const _userId = req.body._userId;
+    const nowPlaying = req.body.nowPlaying ? parseInt(req.body.nowPlaying) : null;
+
+    const queueListKey = "queue:" + _userId;
+    const userListKey = "user:" + _userId;
+
+    // HSET user:1000 password 12345
+    // RPUSH mylist c
+
+    // LINSERT mylist BEFORE "World" "There"
+    // LINDEX mylist 0
+
+    if (nowPlaying !== null) {
+        let nowPlayingSongID;
+        redisClient.lindex(queueListKey, nowPlaying, (err, songID) => {
+            nowPlayingSongID = songID;
+            redisClient.linsert(queueListKey, "after", nowPlayingSongID, _songId, (err, res) => {});
+            redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
+        });
+    } else {
+        redisClient.lpush(queueListKey, _songId, (err, res) => {});
+        redisClient.hset(userListKey, "nowPlaying", 0, (err, res) => {});
+    }
+
+    redisClient.zincrby("trending", 1, _songId, (err, res) => {});
+
+    res.redirect(`/nowPlaying/${_userId}`);
+});
+
+app.post('/skip', (req, res) => {
+    const _songId = req.body._songId;
+    const _userId = req.body._userId;
+    const nowPlaying = parseInt(req.body.nowPlaying);
+    const userListKey = "user:" + _userId;
+
+    redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
+    redisClient.zincrby("trending", -1, _songId, (err, res) => {});
+
+    res.redirect(`/nowPlaying/${_userId}`);
+});
+
+app.post('/previous', (req, res) => {
+    const _songId = req.body._songId;
+    const _userId = req.body._userId;
+    const nowPlaying = parseInt(req.body.nowPlaying);
+    const userListKey = "user:" + _userId;
+
+    redisClient.hset(userListKey, "nowPlaying", nowPlaying - 1, (err, res) => {});
+
+    res.redirect(`/nowPlaying/${_userId}`);
+});
+
+app.get('/like/:_id', (req, res) => {
+    const _id = req.params._id;
+    redisClient.zincrby("trending", 2, _id, (err, res) => {});
+    res.redirect('/');
+});
+
+app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
+
+// client.connect(err => {
+//     if (err) return console.log(err);
+//     console.log('Connected to Database');
+//   const collection = client.db("test").collection("devices");
+  // perform actions on the collection object
+//   client.close();
+// });
+
+// async function main() {
+//     try {
+//         await client.connect();
+//     } catch (e) {
+//         console.error(e);
+//     } finally {
+//         // await client.close();
+//     }
+// }
+
+// main().catch(console.error);
 
 // app.get('/', async (req, res, next) => {
 //     const _songs = await client.db("MUSICDB").collection("songs").find();
@@ -117,70 +216,3 @@ app.get('/nowPlaying/:_userId', async (req, res) => {
 //     //     res.render('home', {songs, trending, queue});
 //     // };
 // });
-
-app.get('/song/:_id', async (req, res) => {
-    const _id = req.params._id;
-    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(_id) });
-    if (song) {
-        return song;
-    } else {
-        console.log('No song found with id: ' + id);
-        return null;
-    }
-});
-
-const getSong = async (id) => {
-    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
-    if (song) {
-        return song;
-    } else {
-        console.log('No song found with id: ' + id);
-        return null;
-    }
-};
-
-app.post('/play', (req, res) => {
-    const _songId = req.body._songId;
-    const _userId = req.body._userId;
-
-    const queueListKey = "queue:" + _userId;
-    const userListKey = "user:" + _userId;
-
-    // HSET user:1000 password 12345
-    // RPUSH mylist c
-
-    // TODO: replace with user id
-    redisClient.lpush(queueListKey, _songId, (err, res) => {});
-    redisClient.hset(userListKey, "nowPlaying", 0, (err, res) => {});
-    redisClient.zincrby("trending", 1, _songId, (err, res) => {});
-
-    res.redirect(`/nowPlaying/${_userId}`);
-});
-
-app.get('/like/:_id', (req, res) => {
-    const _id = req.params._id;
-    redisClient.zincrby("trending", 2, _id, (err, res) => {});
-    res.redirect('/');
-});
-
-app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
-
-// client.connect(err => {
-//     if (err) return console.log(err);
-//     console.log('Connected to Database');
-//   const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-//   client.close();
-// });
-
-// async function main() {
-//     try {
-//         await client.connect();
-//     } catch (e) {
-//         console.error(e);
-//     } finally {
-//         // await client.close();
-//     }
-// }
-
-// main().catch(console.error);

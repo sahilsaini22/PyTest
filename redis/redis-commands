@@ -16,3 +16,7 @@ zincrby trending -1 "song5"
 zincrby trending 2 "song5"
 
 ZREMRANGEBYRANK trending 0 -1
+
+del queue:guest
+hdel user:guest nowPlaying
+
