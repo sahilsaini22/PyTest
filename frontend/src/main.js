@@ -82,13 +82,13 @@ class Main extends Component {
 
                 <Navbar />
 
-                <div class="container pb-56">
+                <div className="container pb-56">
                     {/* <!-- {{#if queue}}
-                    <div class="py-3">
+                    <div className="py-3">
                         <h2>Play Queue</h2>
-                        <ul class="list-group list-group-horizontal overflow-auto">
+                        <ul className="list-group list-group-horizontal overflow-auto">
                             {{#each queue}}
-                            <li class="list-group-item list-group-item-action">
+                            <li className="list-group-item list-group-item-action">
                                 {{this.title}} ({{this.year}})
                             </li>
                             {{/each}}
