@@ -57,8 +57,10 @@ app.get('/trendingSongs', async (req, res) => {
     });
 });
 
-app.get('/queue', async (req, res) => {
-    redisClient.lrange("queue:1000", 0, -1, async (err, queueIDs) => {
+app.get('/queue/:_userId', async (req, res) => {
+    const _userId = req.params._userId;
+    const queueListKey = "queue:" + _userId;
+    redisClient.lrange(queueListKey, 0, -1, async (err, queueIDs) => {
         const queue = await Promise.all(queueIDs.map(songID => getSong(songID)));
         if (queue) {
             return res.json({
@@ -70,8 +72,10 @@ app.get('/queue', async (req, res) => {
     });
 });
 
-app.get('/nowPlaying', async (req, res) => {
-    redisClient.hget("user:1000", "nowPlaying", async (err, nowPlayingID) => {
+app.get('/nowPlaying/:_userId', async (req, res) => {
+    const _userId = req.params._userId;
+    const listKey = "user:" + _userId;
+    redisClient.hget(listKey, "nowPlaying", async (err, nowPlayingID) => {
         if (nowPlayingID) {
             return res.json({
                 data: nowPlayingID
@@ -118,7 +122,6 @@ app.get('/song/:_id', async (req, res) => {
     const _id = req.params._id;
     const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(_id) });
     if (song) {
-        // console.log(song);
         return song;
     } else {
         console.log('No song found with id: ' + id);
@@ -129,7 +132,6 @@ app.get('/song/:_id', async (req, res) => {
 const getSong = async (id) => {
     const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
     if (song) {
-        // console.log(song);
         return song;
     } else {
         console.log('No song found with id: ' + id);
@@ -137,19 +139,22 @@ const getSong = async (id) => {
     }
 };
 
-app.get('/play/:_id', (req, res) => {
-    const _id = req.params._id;
+app.post('/play', (req, res) => {
+    const _songId = req.body._songId;
+    const _userId = req.body._userId;
+
+    const queueListKey = "queue:" + _userId;
+    const userListKey = "user:" + _userId;
 
     // HSET user:1000 password 12345
     // RPUSH mylist c
 
     // TODO: replace with user id
-    redisClient.lpush("queue:1000", _id, (err, res) => {});
-    redisClient.hset("user:1000", "nowPlaying", 0, (err, res) => {});
+    redisClient.lpush(queueListKey, _songId, (err, res) => {});
+    redisClient.hset(userListKey, "nowPlaying", 0, (err, res) => {});
+    redisClient.zincrby("trending", 1, _songId, (err, res) => {});
 
-    redisClient.zincrby("trending", 1, _id, (err, res) => {});
-    // return null;
-    res.redirect('/nowPlaying');
+    res.redirect(`/nowPlaying/${_userId}`);
 });
 
 app.get('/like/:_id', (req, res) => {

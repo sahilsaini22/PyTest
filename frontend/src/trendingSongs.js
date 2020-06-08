@@ -2,7 +2,6 @@ import React from 'react';
 
 const TrendingSongs = (props) => {
     if (props) {
-        console.log(props)
         let trendingSongs = props.trendingSongs.map(({_id, title, year}) => 
             <li class="list-group-item list-group-item-action" key={_id}>
                 {title} ({year})

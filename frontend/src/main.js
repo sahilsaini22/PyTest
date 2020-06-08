@@ -11,7 +11,8 @@ class Main extends Component {
             songs: [],
             trendingSongs: [],
             queue: [],
-            nowPlaying: null
+            nowPlaying: null,
+            userId: 'guest'
         };
     }
 
@@ -37,23 +38,40 @@ class Main extends Component {
     }
 
     getQueue = () => {
-        fetch('http://localhost:4000/queue')
+        fetch(`http://localhost:4000/queue/${this.state.userId}`)
         .then(response => response.json())
-        .then(response => this.setState({ queue: response.data }))
+        .then(response => {
+            this.setState({ queue: response.data })
+        })
         .catch(err => console.error(err));
     }
 
     getNowPlaying = () => {
-        fetch('http://localhost:4000/nowPlaying')
+        fetch(`http://localhost:4000/nowPlaying/${this.state.userId}`)
         .then(response => response.json())
-        .then(response => this.setState({ nowPlaying: response.data }))
+        .then(response => {
+            this.setState({ nowPlaying: response.data })
+        })
         .catch(err => console.error(err));
     }
 
-    handlePlay = (id) => {
-        fetch(`http://localhost:4000/play/${id}`)
+    handlePlay = (songId) => {
+        let body = JSON.stringify({
+            _songId: songId,
+            _userId: this.state.userId
+        });
+
+        fetch('http://localhost:4000/play', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body
+        })
         .then(response => response.json())
-        .then(response => this.setState({ nowPlaying: response.data }))
+        .then(response => {
+            this.setState({ nowPlaying: response.data })
+        })
         .catch(err => console.error(err));
         this.getQueue();
     }
