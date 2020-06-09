@@ -3,6 +3,7 @@ import Navbar from './navbar.js';
 import NowPlaying from './nowPlaying.js';
 import Songs from './songs.js';
 import TrendingSongs from './trendingSongs.js';
+import RegisterModal from './registerModal.js';
 
 class Main extends Component {
     constructor(props) {
@@ -125,7 +126,7 @@ class Main extends Component {
             <>
 
                 <Navbar />
-
+                <RegisterModal />
                 <div className="container pb-56">
                     {/* <!-- {{#if queue}}
                     <div className="py-3">
