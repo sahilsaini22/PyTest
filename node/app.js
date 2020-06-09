@@ -7,6 +7,8 @@ const methodOverride = require('method-override');
 const redis = require('redis');
 const app = express();
 const port = 4000;
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const ObjectId = require('mongodb').ObjectID;
 const MongoClient = require('mongodb').MongoClient;
@@ -165,21 +167,23 @@ app.get('/like/:_id', (req, res) => {
 
 app.post('/register', async (req, res) => {
     const registerData = req.body;
-    const resultUser = await client.db("MUSICDB").collection("users").insertOne({
-        username: registerData.username,
-        password: registerData.password,
-        role: registerData.role,
-        country: registerData.country
-    });
-    console.log(`New user created with the following id: ${resultUser.insertedId}`);
-    const resultUserObject = resultUser.ops[0];
-    return res.json({
-        data: {
-            _id: resultUser.insertedId,
-            username: resultUserObject.username,
-            role: resultUserObject.role,
-            country: resultUserObject.country    
-        }
+    bcrypt.hash(registerData.password, saltRounds, async function (err, hash) {
+        const resultUser = await client.db("MUSICDB").collection("users").insertOne({
+            username: registerData.username,
+            password: hash,
+            role: registerData.role,
+            country: registerData.country
+        });
+        console.log(`New user created with the following id: ${resultUser.insertedId}`);
+        const resultUserObject = resultUser.ops[0];
+        return res.json({
+            data: {
+                _id: resultUser.insertedId,
+                username: resultUserObject.username,
+                role: resultUserObject.role,
+                country: resultUserObject.country    
+            }
+        });
     });
 });
 
