@@ -15,8 +15,14 @@ zscore trending "song5"
 zincrby trending -1 "song5"
 zincrby trending 2 "song5"
 
+
 ZREMRANGEBYRANK trending 0 -1
 
+lrange queue:guest 0 -1
 del queue:guest
+
+del trending
+
+hget user:guest nowPlaying
 hdel user:guest nowPlaying
 
