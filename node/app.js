@@ -5,6 +5,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const redis = require('redis');
+const jwt = require("./jwt.js");
 const app = express();
 const port = 4000;
 const bcrypt = require('bcrypt');
@@ -38,6 +39,7 @@ app.get('/songs', async (req, res) => {
     const _songs = await client.db("MUSICDB").collection("songs").find();
     const songs = await _songs.toArray();
     if (songs) {
+        // console.log(songs);
         return res.json({
             data: songs
         });
@@ -186,6 +188,32 @@ app.post('/register', async (req, res) => {
         });
     });
 });
+
+app.post('/login', async (req, res) => {
+    const userData = await client.db("MUSICDB").collection("users").findOne({ username: req.body.username });
+    if (userData) {
+        bcrypt.compare(req.body.password, userData.password, function(err, result) {
+            if (result === true) {
+                const payload = {
+                    _id: userData._id,
+                    username: userData.username,
+                    role: userData.role,
+                    country: userData.country
+                };
+                let token = jwt.sign(payload);
+                console.log(token);
+                return res.json({ result: "success", token, payload, message: "Login successful" });
+            } else {
+                // Invalid password
+                return res.json({ result: "error", message: "Invalid password" });
+            }
+        });
+    } else {
+        // Invalid username
+        return res.json({ result: "error", message: "Invalid username" });
+    }          
+});
+
 
 app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
 

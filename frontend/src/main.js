@@ -4,6 +4,7 @@ import NowPlaying from './nowPlaying.js';
 import Songs from './songs.js';
 import TrendingSongs from './trendingSongs.js';
 import RegisterModal from './registerModal.js';
+import LoginModal from './loginModal.js';
 
 class Main extends Component {
     constructor(props) {
@@ -28,7 +29,10 @@ class Main extends Component {
     getSongs = () => {
         fetch('http://localhost:4000/songs')
         .then(response => response.json())
-        .then(response => this.setState({ songs: response.data }))
+        .then(response => {
+            // console.log(response);
+            this.setState({ songs: response.data });
+        })
         .catch(err => console.error(err));
     }
 
@@ -150,11 +154,42 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
 
+    handleLogin = (loginData) => {
+        let body = JSON.stringify({
+            username: loginData.username,
+            password: loginData.password
+        });
+
+        fetch('http://localhost:4000/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.result === "success") {
+                localStorage.setItem("token", response.token);
+                this.setState({
+                    userId: response.payload._id,
+                    userDetails: response.payload
+                }, () => {
+                    window.$('#loginModal').modal('hide');
+                });    
+            } else {
+                window.alert(response.message);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+    
     render() {
         return (
             <>
                 <Navbar />
                 <RegisterModal handleRegister={this.handleRegister} />
+                <LoginModal handleLogin={this.handleLogin} />
                 <div className="container pb-56">
                     {/* <!-- {{#if queue}}
                     <div className="py-3">
