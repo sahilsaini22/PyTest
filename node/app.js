@@ -214,6 +214,14 @@ app.post('/login', async (req, res) => {
     }          
 });
 
+app.post('/currentUser', (req, res) => {
+    const token = req.body.token;
+    const decoded = jwt.decode(token);
+    const userData = decoded.payload;
+    return res.json({
+        data: userData
+    });
+});
 
 app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
 

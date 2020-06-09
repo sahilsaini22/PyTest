@@ -20,10 +20,39 @@ class Main extends Component {
     }
 
     componentDidMount() {
+        this.getCurrentUser();
         this.getSongs();
         this.getTrendingSongs();
         this.getQueue();
         this.getNowPlaying();
+    }
+
+    getUserToken = () => {
+        return localStorage.getItem('token');
+    };
+
+    getCurrentUser = () => {
+        let token = this.getUserToken();
+        if (token) {
+            let body = JSON.stringify({
+                token: token
+            });
+            fetch('http://localhost:4000/currentUser', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            })
+            .then(response => response.json())
+            .then(response => {
+                this.setState({
+                    userId: response.data._id,
+                    userDetails: response.data
+                });
+            })
+            .catch(err => console.error(err));    
+        }
     }
 
     getSongs = () => {
@@ -183,11 +212,23 @@ class Main extends Component {
         })
         .catch(err => console.error(err));
     }
-    
+
+    handleLogout = () => {
+        localStorage.removeItem('token');
+        this.setState({
+            userId: 'guest',
+            userDetails: null
+        });
+    }
+
     render() {
         return (
             <>
-                <Navbar />
+                <Navbar
+                    userId={this.state.userId}
+                    userDetails={this.state.userDetails}
+                    handleLogout={this.handleLogout}
+                />
                 <RegisterModal handleRegister={this.handleRegister} />
                 <LoginModal handleLogin={this.handleLogin} />
                 <div className="container pb-56">

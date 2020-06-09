@@ -9,4 +9,7 @@ module.exports = {
         };
         return jwt.sign(payload, privateKey, signOptions);
     },
+    decode: (token) => {
+        return jwt.decode(token, { complete: true, json: true });
+    }
 }

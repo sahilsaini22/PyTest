@@ -2,6 +2,25 @@ import React, { Component } from 'react';
 
 class Navbar extends Component {
     render() {
+        const userDetails = this.props.userDetails;
+        let navLinks = userDetails ? (
+            <>
+                <div className="navbar-text">Hello {userDetails.username}</div>
+                <li className="nav-item">
+                    <a className="nav-link" onClick={this.props.handleLogout} href="#">Logout</a>
+                </li>
+            </>
+        ) : ( 
+            <>
+                <li className="nav-item">
+                    <a className="nav-link" data-toggle="modal" data-target="#registerModal" href="#">Register</a>
+                </li>
+                <li className="nav-item">
+                    <a className="nav-link" data-toggle="modal" data-target="#loginModal" href="#">Login</a>
+                </li>
+            </>
+        )
+
         return (
             <nav className="navbar navbar-expand-lg navbar-light bg-light">
                 <div className="container">
@@ -12,12 +31,7 @@ class Navbar extends Component {
 
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul className="navbar-nav mr-auto">
-                            <li className="nav-item">
-                                <a className="nav-link" data-toggle="modal" data-target="#registerModal" href="#">Register</a>
-                            </li>
-                            <li className="nav-item">
-                                <a className="nav-link" data-toggle="modal" data-target="#loginModal" href="#">Login</a>
-                            </li>
+                            {navLinks}
                         </ul>
                         <form className="form-inline my-2 my-lg-0">
                             <input className="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" />
