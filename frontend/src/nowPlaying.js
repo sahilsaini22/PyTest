@@ -3,9 +3,9 @@ import React from 'react';
 const NowPlaying = (props) => {
     let nowPlaying = props.queue[props.nowPlaying];
     if (nowPlaying) {
-        let queue = props.queue.map(({_id, title, year}, index) => 
+        let queue = props.queue.map(({_id, Song, Year}, index) => 
             <li className="list-group-item list-group-item-action" key={_id + index}>
-                {title} ({year})
+                {Song} ({Year})
             </li>        
         );
 
@@ -37,7 +37,7 @@ const NowPlaying = (props) => {
                 <div className="container">
                     <div>
                         {previousButton}
-                        Now playing: {nowPlaying.title}
+                        Now playing: {nowPlaying.Song}
                         {skipButton}
                     </div>
                 </div> 
@@ -51,7 +51,7 @@ const NowPlaying = (props) => {
                     {/* {{#if nowPlaying}}
                     <p>nowPlaying: {{ nowPlaying }}</p>
                     {{/if}}
-                    <p>Now Playing: {{queue.0.title}} ({{queue.0.year}})</p> */}
+                    <p>Now Playing: {{queue.0.Song}} ({{queue.0.Year}})</p> */}
                 </div> 
             </nav>
         );

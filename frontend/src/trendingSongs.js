@@ -2,9 +2,9 @@ import React from 'react';
 
 const TrendingSongs = (props) => {
     if (props) {
-        let trendingSongs = props.trendingSongs.map(({_id, title, year}) => 
+        let trendingSongs = props.trendingSongs.map(({_id, Song, Year}) => 
             <li className="list-group-item list-group-item-action" key={_id}>
-                {title} ({year})
+                {Song} ({Year})
                 <p><a href={'/play/' + _id}>play</a> <a href={'/like/' + _id}>like</a></p>
             </li>        
         );

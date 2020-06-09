@@ -2,9 +2,9 @@ import React from 'react';
 
 const Songs = (props) => {
     if (props) {
-        let songs = props.songs.map(({_id, title, year}) => 
+        let songs = props.songs.map(({_id, Song, Year}) => 
             <li className="list-group-item list-group-item-action" key={_id}>
-                {title} ({year})
+                {Song} ({Year})
                 <button
                     type="button"
                     className="btn btn-outline-primary"
