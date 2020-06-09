@@ -13,7 +13,8 @@ class Main extends Component {
             trendingSongs: [],
             queue: [],
             nowPlaying: null,
-            userId: 'guest'
+            userId: 'guest',
+            userDetails: null
         };
     }
 
@@ -121,12 +122,39 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
 
+    handleRegister = (registerData) => {
+        let body = JSON.stringify({
+            username: registerData.username,
+            password: registerData.password,
+            role: registerData.role,
+            country: registerData.country
+        });
+
+        fetch('http://localhost:4000/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            console.log(response);
+            this.setState({
+                userId: response.data._id,
+                userDetails: response.data
+            }, () => {
+                window.$('#registerModal').modal('hide');
+            });
+        })
+        .catch(err => console.error(err));
+    }
+
     render() {
         return (
             <>
-
                 <Navbar />
-                <RegisterModal />
+                <RegisterModal handleRegister={this.handleRegister} />
                 <div className="container pb-56">
                     {/* <!-- {{#if queue}}
                     <div className="py-3">

@@ -32,7 +32,7 @@ class RegisterModal extends Component {
                                 return errors;
                             }}
                             onSubmit={(values, { setSubmitting }) => {
-                                console.log(values);
+                                this.props.handleRegister(values);
                                 setSubmitting(false);
                             }}
                         >

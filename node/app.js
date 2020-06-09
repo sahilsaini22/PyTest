@@ -163,6 +163,26 @@ app.get('/like/:_id', (req, res) => {
     res.redirect('/');
 });
 
+app.post('/register', async (req, res) => {
+    const registerData = req.body;
+    const resultUser = await client.db("MUSICDB").collection("users").insertOne({
+        username: registerData.username,
+        password: registerData.password,
+        role: registerData.role,
+        country: registerData.country
+    });
+    console.log(`New user created with the following id: ${resultUser.insertedId}`);
+    const resultUserObject = resultUser.ops[0];
+    return res.json({
+        data: {
+            _id: resultUser.insertedId,
+            username: resultUserObject.username,
+            role: resultUserObject.role,
+            country: resultUserObject.country    
+        }
+    });
+});
+
 app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
 
 // client.connect(err => {
