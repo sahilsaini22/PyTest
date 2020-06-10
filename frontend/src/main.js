@@ -20,11 +20,15 @@ class Main extends Component {
     }
 
     componentDidMount() {
-        this.getCurrentUser();
-        this.getSongs();
-        this.getTrendingSongs();
-        this.getQueue();
-        this.getNowPlaying();
+        this.fetchData();
+    }
+
+    fetchData = async () => {
+        await this.getCurrentUser();
+        await this.getSongs();
+        await this.getTrendingSongs();
+        await this.getQueue();
+        await this.getNowPlaying();    
     }
 
     getUserToken = () => {
@@ -32,62 +36,88 @@ class Main extends Component {
     };
 
     getCurrentUser = () => {
-        let token = this.getUserToken();
-        if (token) {
-            let body = JSON.stringify({
-                token: token
-            });
-            fetch('http://localhost:4000/currentUser', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: body
-            })
-            .then(response => response.json())
-            .then(response => {
-                this.setState({
-                    userId: response.data._id,
-                    userDetails: response.data
+        return new Promise(resolve => {
+            let token = this.getUserToken();
+            if (token) {
+                let body = JSON.stringify({
+                    token: token
                 });
-            })
-            .catch(err => console.error(err));    
-        }
+                fetch('http://localhost:4000/currentUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: body
+                })
+                .then(response => response.json())
+                .then(response => {
+                    this.setState({
+                        userId: response.data._id,
+                        userDetails: response.data
+                    }, () => { resolve() });
+                })
+                .catch(err => {
+                    console.error(err);
+                    resolve();
+                });    
+            }
+            resolve();    
+        });
     }
 
     getSongs = () => {
-        fetch('http://localhost:4000/songs')
-        .then(response => response.json())
-        .then(response => {
-            // console.log(response);
-            this.setState({ songs: response.data });
-        })
-        .catch(err => console.error(err));
+        return new Promise(resolve => {
+            fetch('http://localhost:4000/songs')
+            .then(response => response.json())
+            .then(response => {
+                // console.log(response);
+                this.setState({ songs: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
     }
 
     getTrendingSongs = () => {
-        fetch('http://localhost:4000/trendingSongs')
-        .then(response => response.json())
-        .then(response => this.setState({ trendingSongs: response.data }))
-        .catch(err => console.error(err));
+        return new Promise(resolve => {
+            fetch('http://localhost:4000/trendingSongs')
+            .then(response => response.json())
+            .then(response => this.setState({ trendingSongs: response.data }, () => { resolve() }))
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        })
     }
 
     getQueue = () => {
-        fetch(`http://localhost:4000/queue/${this.state.userId}`)
-        .then(response => response.json())
-        .then(response => {
-            this.setState({ queue: response.data })
-        })
-        .catch(err => console.error(err));
+        return new Promise (resolve => {
+            fetch(`http://localhost:4000/queue/${this.state.userId}`)
+            .then(response => response.json())
+            .then(response => {
+                this.setState({ queue: response.data }, () => { resolve() })
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
     }
 
     getNowPlaying = () => {
-        fetch(`http://localhost:4000/nowPlaying/${this.state.userId}`)
-        .then(response => response.json())
-        .then(response => {
-            this.setState({ nowPlaying: response.data })
+        return new Promise (resolve => {
+            fetch(`http://localhost:4000/nowPlaying/${this.state.userId}`)
+            .then(response => response.json())
+            .then(response => {
+                this.setState({ nowPlaying: response.data }, () => { resolve() })
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
         })
-        .catch(err => console.error(err));
     }
 
     handlePlay = (songId) => {
@@ -106,8 +136,9 @@ class Main extends Component {
         })
         .then(response => response.json())
         .then(response => {
-            this.setState({ nowPlaying: response.data }, () => {
-                this.getQueue();
+            this.setState({ nowPlaying: response.data }, async () => {
+                await this.getQueue();
+                await this.getTrendingSongs();
             })
         })
         .catch(err => console.error(err));
