@@ -1,7 +1,7 @@
 import React from 'react';
 
 const TrendingSongs = (props) => {
-    if (props) {
+    if (props.userDetails) {
         let trendingSongs = props.trendingSongs.map(({_id, Song, Year}) => 
             <li className="list-group-item list-group-item-action" key={_id}>
                 {Song} ({Year})
@@ -17,6 +17,8 @@ const TrendingSongs = (props) => {
                 </ul>
             </div> 
         );
+    } else {
+        return null;
     }
 }
 

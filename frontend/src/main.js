@@ -359,7 +359,10 @@ class Main extends Component {
                         songs={this.state.songs}
                         handlePlay={this.handlePlay}
                     />
-                    <TrendingSongs trendingSongs={this.state.trendingSongs} />
+                    <TrendingSongs
+                        trendingSongs={this.state.trendingSongs}
+                        userDetails={this.state.userDetails}
+                    />
                     <Users
                         users={this.state.users}
                         userDetails={this.state.userDetails}
