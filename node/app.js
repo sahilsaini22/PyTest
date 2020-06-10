@@ -110,33 +110,52 @@ const getSong = async (id) => {
 app.post('/play', (req, res) => {
     const _songId = req.body._songId;
     const _userId = req.body._userId;
-    const nowPlaying = req.body.nowPlaying ? parseInt(req.body.nowPlaying) : null;
 
     const queueListKey = "queue:" + _userId;
     const userListKey = "user:" + _userId;
 
-    // HSET user:1000 password 12345
-    // RPUSH mylist c
-
-    // LINSERT mylist BEFORE "World" "There"
-    // LINDEX mylist 0
-
-    if (nowPlaying !== null) {
-        let nowPlayingSongID;
-        redisClient.lindex(queueListKey, nowPlaying, (err, songID) => {
-            nowPlayingSongID = songID;
-            redisClient.linsert(queueListKey, "after", nowPlayingSongID, _songId, (err, res) => {});
-            redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
-        });
-    } else {
-        redisClient.lpush(queueListKey, _songId, (err, res) => {});
-        redisClient.hset(userListKey, "nowPlaying", 0, (err, res) => {});
-    }
+    redisClient.rpush(queueListKey, _songId, (err, listLength) => {
+        redisClient.hset(userListKey, "nowPlaying", listLength - 1);
+    });
 
     redisClient.zincrby("trending", 1, _songId, (err, res) => {});
 
     res.redirect(`/nowPlaying/${_userId}`);
 });
+
+// app.post('/playNext', (req, res) => {
+//     const _songId = req.body._songId;
+//     const _userId = req.body._userId;
+//     const nowPlaying = req.body.nowPlaying ? parseInt(req.body.nowPlaying) : null;
+
+//     const queueListKey = "queue:" + _userId;
+//     const userListKey = "user:" + _userId;
+
+//     // HSET user:1000 password 12345
+//     // RPUSH mylist c
+
+//     // LINSERT mylist BEFORE "World" "There"
+//     // LINDEX mylist 0
+
+//     // TODO separate play playNext playLater
+//     // TODO if songid in list, add transaction, if not, insert after
+
+//     if (nowPlaying !== null) {
+//         let nowPlayingSongID;
+//         redisClient.lindex(queueListKey, nowPlaying, (err, songID) => {
+//             nowPlayingSongID = songID;
+//             redisClient.linsert(queueListKey, "after", nowPlayingSongID, _songId, (err, res) => {});
+//             redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
+//         });
+//     } else {
+//         redisClient.lpush(queueListKey, _songId, (err, res) => {});
+//         redisClient.hset(userListKey, "nowPlaying", 0, (err, res) => {});
+//     }
+
+//     redisClient.zincrby("trending", 1, _songId, (err, res) => {});
+
+//     res.redirect(`/nowPlaying/${_userId}`);
+// });
 
 app.post('/skip', (req, res) => {
     const _songId = req.body._songId;
