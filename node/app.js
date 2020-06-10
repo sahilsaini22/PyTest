@@ -21,6 +21,8 @@ client.connect()
 })
 .catch(error => console.error(error));
 
+const neo4j = require('neo4j-driver');
+
 let redisClient = redis.createClient();
 redisClient.on('connect', () => {
     console.log('Connected to Redis');
@@ -97,16 +99,6 @@ app.get('/song/:_id', async (req, res) => {
     }
 });
 
-const getSong = async (id) => {
-    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
-    if (song) {
-        return song;
-    } else {
-        console.log('No song found with id: ' + id);
-        return null;
-    }
-};
-
 app.post('/play', (req, res) => {
     const _songId = req.body._songId;
     const _userId = req.body._userId;
@@ -118,7 +110,7 @@ app.post('/play', (req, res) => {
         redisClient.hset(userListKey, "nowPlaying", listLength - 1);
     });
 
-    redisClient.zincrby("trending", 1, _songId, (err, res) => {});
+    redisClient.zincrby("trending", 1, _songId);
 
     res.redirect(`/nowPlaying/${_userId}`);
 });
@@ -241,6 +233,67 @@ app.post('/currentUser', (req, res) => {
         data: userData
     });
 });
+
+// NEO
+
+app.post('/neoUserAdd', async (req, res) => {
+    try {
+        const { username, role, country } = req.body;                                 
+        if (role === 'user') {
+            const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();            
+            session.run('MERGE (u:User {name: $temp1}) MERGE (c:Country {name: $temp2}) MERGE (u)-[:LIVES_IN]->(c)', {temp1: username, temp2: country})
+            .then(() => {
+                session.close();
+                return res.json({ result: "success", message: "Neo4j user created" });
+            })
+            .catch((e) => {
+                return res.json({ result: "error", message: e.message });
+            });
+        }
+    } catch (e) {
+        return res.json({ result: "error", message: e.message });
+    }
+});
+
+
+    // //const driver2 = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+    // //const session2 = driver2.session();
+    // app.post('/neogenreadd', async (req, res) => {
+    //     try{        
+    //         const { username, genres } = req.body;    
+    //         if(genres){
+    //             const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+    //             const session = driver.session();                                
+    //             session.run('MERGE (u:User {name: $temp3}) WITH u UNWIND $temp4 AS genre MERGE (g:Genres {genre: genre})MERGE (u)-[:LIKES]->(g)', {temp3: username, temp4: genres}
+    //             )
+    //             .then(() => session.close());
+    //         }
+            
+    //         console.log(username)
+    //         console.log(genres)
+    //         res.status(200).json({               
+                
+    //           }); 
+    //     } catch (e) {
+    //         res.status(400).json({ error: e.message });
+    //       }
+    
+    //     } );
+
+
+// FUNCTIONS
+
+const getSong = async (id) => {
+    const song = await client.db("MUSICDB").collection("songs").findOne({ _id: new ObjectId(id) });
+    if (song) {
+        return song;
+    } else {
+        console.log('No song found with id: ' + id);
+        return null;
+    }
+};
+
 
 app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
 

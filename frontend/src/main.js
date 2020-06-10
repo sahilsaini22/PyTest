@@ -196,9 +196,7 @@ class Main extends Component {
 
         fetch('http://localhost:4000/register', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: body
         })
         .then(response => response.json())
@@ -208,7 +206,17 @@ class Main extends Component {
                 userId: response.data._id,
                 userDetails: response.data
             }, () => {
-                window.$('#registerModal').modal('hide');
+                fetch('http://localhost:4000/neoUserAdd', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                })
+                .then(response => response.json())
+                .then(response => {
+                    console.log(response);
+                    window.$('#registerModal').modal('hide');
+                })
+                .catch(err => console.error(err));
             });
         })
         .catch(err => console.error(err));
