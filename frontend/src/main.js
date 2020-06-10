@@ -5,6 +5,7 @@ import Songs from './songs.js';
 import TrendingSongs from './trendingSongs.js';
 import RegisterModal from './registerModal.js';
 import LoginModal from './loginModal.js';
+import Users from './users.js';
 
 class Main extends Component {
     constructor(props) {
@@ -15,7 +16,8 @@ class Main extends Component {
             queue: [],
             nowPlaying: null,
             userId: 'guest',
-            userDetails: null
+            userDetails: null,
+            users: []
         };
     }
 
@@ -28,7 +30,10 @@ class Main extends Component {
         await this.getSongs();
         await this.getTrendingSongs();
         await this.getQueue();
-        await this.getNowPlaying();    
+        await this.getNowPlaying();
+        if (this.state.userDetails) {
+            await this.getUsers();            
+        }
     }
 
     getUserToken = () => {
@@ -62,6 +67,21 @@ class Main extends Component {
                 });    
             }
             resolve();    
+        });
+    }
+
+    getUsers = () => {
+        return new Promise(resolve => {
+            fetch('http://localhost:4000/users')
+            .then(response => response.json())
+            .then(response => {
+                // console.log(response);
+                this.setState({ users: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
         });
     }
 
@@ -256,14 +276,51 @@ class Main extends Component {
                 this.setState({
                     userId: response.payload._id,
                     userDetails: response.payload
-                }, () => {
+                }, async () => {
                     window.$('#loginModal').modal('hide');
+                    await this.getQueue();
+                    await this.getNowPlaying();
+                    await this.getUsers();            
                 });    
             } else {
                 window.alert(response.message);
             }
         })
         .catch(err => console.error(err));
+    }
+
+    handleFollow = (userId) => {
+        console.log(userId)
+        // let body = JSON.stringify({
+        //     username: loginData.username,
+        //     password: loginData.password
+        // });
+
+        // fetch('http://localhost:4000/login', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: body
+        // })
+        // .then(response => response.json())
+        // .then(response => {
+        //     if (response.result === "success") {
+        //         localStorage.setItem("token", response.token);
+        //         this.setState({
+        //             userId: response.payload._id,
+        //             userDetails: response.payload
+        //         }, async () => {
+        //             window.$('#loginModal').modal('hide');
+        //             await this.getQueue();
+        //             await this.getNowPlaying();
+        //             await this.getUsers();            
+        //         });    
+        //     } else {
+        //         window.alert(response.message);
+        //     }
+        // })
+        // .catch(err => console.error(err));
     }
 
     handleLogout = () => {
@@ -303,6 +360,11 @@ class Main extends Component {
                         handlePlay={this.handlePlay}
                     />
                     <TrendingSongs trendingSongs={this.state.trendingSongs} />
+                    <Users
+                        users={this.state.users}
+                        userDetails={this.state.userDetails}
+                        handleFollow={this.handleFollow}
+                    />
                 </div>
 
                 <NowPlaying

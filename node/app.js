@@ -50,6 +50,19 @@ app.get('/songs', async (req, res) => {
     }
 });
 
+app.get('/users', async (req, res) => {
+    const _users = await client.db("MUSICDB").collection("users").find({ role: "user" });
+    const users = await _users.toArray();
+    if (users) {
+        // console.log(songs);
+        return res.json({
+            data: users
+        });
+    } else {
+        return null;
+    }
+});
+
 app.get('/trendingSongs', async (req, res) => {
     redisClient.zrevrange("trending", 0, 9, async (err, trendingSongIDs) => {
         const trendingSongs = await Promise.all(trendingSongIDs.map(songID => getSong(songID)))
