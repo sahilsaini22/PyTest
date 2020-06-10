@@ -244,11 +244,11 @@ app.post('/neoUserAdd', async (req, res) => {
     try {
         const { username, role, country } = req.body;                                 
         if (role === 'user') {
-            const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
-            const session = driver.session();            
-            session.run('MERGE (u:User {name: $temp1}) MERGE (c:Country {name: $temp2}) MERGE (u)-[:LIVES_IN]->(c)', {temp1: username, temp2: country})
+            const neoDriver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
+            const neoSession = neoDriver.session();                                
+            neoSession.run('MERGE (u:User {name: $temp1}) MERGE (c:Country {name: $temp2}) MERGE (u)-[:LIVES_IN]->(c)', {temp1: username, temp2: country})
             .then(() => {
-                session.close();
+                neoSession.close();
                 return res.json({ result: "success", message: "Neo4j user created" });
             })
             .catch((e) => {
@@ -260,30 +260,24 @@ app.post('/neoUserAdd', async (req, res) => {
     }
 });
 
-
-    // //const driver2 = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
-    // //const session2 = driver2.session();
-    // app.post('/neogenreadd', async (req, res) => {
-    //     try{        
-    //         const { username, genres } = req.body;    
-    //         if(genres){
-    //             const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
-    //             const session = driver.session();                                
-    //             session.run('MERGE (u:User {name: $temp3}) WITH u UNWIND $temp4 AS genre MERGE (g:Genres {genre: genre})MERGE (u)-[:LIKES]->(g)', {temp3: username, temp4: genres}
-    //             )
-    //             .then(() => session.close());
-    //         }
-            
-    //         console.log(username)
-    //         console.log(genres)
-    //         res.status(200).json({               
-                
-    //           }); 
-    //     } catch (e) {
-    //         res.status(400).json({ error: e.message });
-    //       }
-    
-    //     } );
+app.post('/neoGenreAdd', async (req, res) => {
+    try {        
+        const { username, likedGenres } = req.body;    
+        const neoDriver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
+        const neoSession = neoDriver.session();                                
+        neoSession.run('MERGE (u:User {name: $temp3}) WITH u UNWIND $temp4 AS genre MERGE (g:Genres {genre: genre})MERGE (u)-[:LIKES]->(g)', {temp3: username, temp4: likedGenres})
+        .then(() => {
+            console.log('node: Neo4j user-genre relationship added');
+            neoSession.close();
+            return res.json({ result: "success", message: "Neo4j user-genre relationship added" });
+        })
+        .catch((e) => {
+            return res.json({ result: "error", message: e.message });
+        });
+    } catch (e) {
+        return res.json({ result: "error", message: e.message });
+    }
+});
 
 
 // FUNCTIONS

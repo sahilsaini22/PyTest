@@ -1,3 +1,12 @@
 .pb-56 {
   padding-bottom: 56px; 
 }
+
+.genresContainer {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.genresDiv {
+  width: 148px;
+}

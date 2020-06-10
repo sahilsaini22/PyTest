@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, Field, FieldArray, ErrorMessage } from 'formik';
+import { genres } from './genres.js';
 
 class RegisterModal extends Component {
     render() {
@@ -19,7 +20,8 @@ class RegisterModal extends Component {
                                 username: '',
                                 password: '',
                                 role: 'user',
-                                country: ''
+                                country: '',
+                                likedGenres: []
                             }}
                             validate={values => {
                                 const errors = {};
@@ -36,7 +38,7 @@ class RegisterModal extends Component {
                                 setSubmitting(false);
                             }}
                         >
-                            {({ isSubmitting }) => (
+                            {({ values, isSubmitting }) => (
                                 <Form>
                                     <div className="form-group">
                                         <label htmlFor="username">Username</label>
@@ -64,6 +66,44 @@ class RegisterModal extends Component {
                                             <option value="Philippines">Philippines</option>
                                         </Field>
                                     </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="likedGenres">Genres I Like</label>
+                                        <FieldArray
+                                            name="likedGenres"
+                                            render={arrayHelpers => (
+                                            <div className="genresContainer form-check">
+                                                {genres.map(genre => (
+                                                    <div 
+                                                        key={genre.name}
+                                                        className="genresDiv"
+                                                    >
+                                                        <input
+                                                            id={genre.name}
+                                                            name="likedGenres"
+                                                            type="checkbox"
+                                                            value={genre.name}
+                                                            checked={values.likedGenres.includes(genre.name)}
+                                                            onChange={e => {
+                                                                if (e.target.checked) {
+                                                                    arrayHelpers.push(genre.name);
+                                                                } else {
+                                                                    const index = values.likedGenres.indexOf(genre.name);
+                                                                    arrayHelpers.remove(index);
+                                                                }
+                                                            }}
+                                                            className="form-check-input"
+                                                        />
+                                                        <label htmlFor={genre.name} className="form-check-label">
+                                                            {genre.name}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            )}
+                                        />
+                                    </div>
+
                                     <button type="submit" disabled={isSubmitting} className="btn btn-primary">
                                         Register
                                     </button>

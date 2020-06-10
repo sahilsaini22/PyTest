@@ -191,7 +191,8 @@ class Main extends Component {
             username: registerData.username,
             password: registerData.password,
             role: registerData.role,
-            country: registerData.country
+            country: registerData.country,
+            likedGenres: registerData.likedGenres
         });
 
         fetch('http://localhost:4000/register', {
@@ -215,6 +216,18 @@ class Main extends Component {
                 .then(response => response.json())
                 .then(response => {
                     console.log(response);
+                    if (registerData.likedGenres) {
+                        fetch('http://localhost:4000/neoGenreAdd', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: body
+                        })
+                        .then(response => response.json())
+                        .then(response => {
+                            console.log(response);
+                        })
+                        .catch(err => console.error(err));    
+                    }
                     window.$('#registerModal').modal('hide');
                 })
                 .catch(err => console.error(err));
