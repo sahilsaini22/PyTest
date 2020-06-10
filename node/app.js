@@ -189,13 +189,17 @@ app.post('/register', async (req, res) => {
         });
         console.log(`New user created with the following id: ${resultUser.insertedId}`);
         const resultUserObject = resultUser.ops[0];
+
+        const payload = {
+            _id: resultUser.insertedId,
+            username: resultUserObject.username,
+            role: resultUserObject.role,
+            country: resultUserObject.country    
+        };
+        const token = jwt.sign(payload);
         return res.json({
-            data: {
-                _id: resultUser.insertedId,
-                username: resultUserObject.username,
-                role: resultUserObject.role,
-                country: resultUserObject.country    
-            }
+            data: payload,
+            token
         });
     });
 });

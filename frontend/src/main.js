@@ -202,6 +202,7 @@ class Main extends Component {
         .then(response => response.json())
         .then(response => {
             console.log(response);
+            localStorage.setItem("token", response.token);
             this.setState({
                 userId: response.data._id,
                 userDetails: response.data
