@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Formik, Form, Field } from 'formik';
 
 class Navbar extends Component {
     render() {
@@ -33,10 +34,34 @@ class Navbar extends Component {
                         <ul className="navbar-nav mr-auto">
                             {navLinks}
                         </ul>
-                        <form className="form-inline my-2 my-lg-0">
-                            <input className="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" />
-                            <button className="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                        </form>
+
+                        <Formik
+                            initialValues={{
+                                query: '',
+                            }}
+                            validate={values => {
+                                const errors = {};
+                                if (!values.query) {
+                                    errors.query = 'Required';
+                                }
+                                return errors;
+                            }}
+                            onSubmit={(values, { setSubmitting }) => {
+                                this.props.handleSearch(values.query);
+                                setSubmitting(false);
+                            }}
+                        >
+                            {({ isSubmitting }) => (
+                                <Form className="form-inline my-2 my-lg-0">
+                                    <div className="form-group">
+                                        <Field type="search" name="query" placeholder="Search songs" className="form-control mr-sm-2" />
+                                    </div>
+                                    <button type="submit" disabled={isSubmitting} className="btn btn-outline-success my-2 my-sm-0">
+                                        Search
+                                    </button>
+                                </Form>
+                            )}
+                        </Formik>
                     </div>
                 </div>
             </nav>

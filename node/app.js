@@ -50,6 +50,21 @@ app.get('/songs', async (req, res) => {
     }
 });
 
+app.get('/searchSongs/:query', async (req, res) => {
+    // const query = decodeURI(req.params.query);
+    const query = req.params.query;
+    const regexp = new RegExp(query,"i");
+    const _searchResults = await client.db("MUSICDB").collection("songs").find({Song: regexp});
+    const searchResults = await _searchResults.toArray();
+    if (searchResults) {
+        return res.json({
+            data: searchResults
+        });
+    } else {
+        return null;
+    }
+});
+
 app.get('/users', async (req, res) => {
     const _users = await client.db("MUSICDB").collection("users").find({ role: "user" });
     const users = await _users.toArray();

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Router from './router.js';
 import Navbar from './navbar.js';
 import NowPlaying from './nowPlaying.js';
 import Songs from './songs.js';
@@ -6,6 +7,7 @@ import TrendingSongs from './trendingSongs.js';
 import RegisterModal from './registerModal.js';
 import LoginModal from './loginModal.js';
 import Users from './users.js';
+import SearchResults from './searchResults.js';
 
 class Main extends Component {
     constructor(props) {
@@ -19,7 +21,9 @@ class Main extends Component {
             userDetails: null,
             users: [],
             likedSongs: [],
-            followedUsers: []
+            followedUsers: [],
+            query: '',
+            resultSongs: [],
         };
     }
 
@@ -462,6 +466,22 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
     
+    handleSearch = (searchQuery) => {
+        // const query = encodeURI(searchQuery);
+        fetch(`http://localhost:4000/searchSongs/${searchQuery}`)
+        .then(response => response.json())
+        .then(response => {
+            console.log(response);
+            this.setState({
+                query: searchQuery,
+                resultSongs: response.data
+            });
+        })
+        .catch(err => {
+            console.error(err);
+        });    
+    }
+
     handleLogout = () => {
         localStorage.removeItem('token');
         this.setState({
@@ -469,6 +489,9 @@ class Main extends Component {
             userDetails: null,
             likedSongs: [],
             followedUsers: []
+        }, async () => {
+            await this.getQueue();
+            await this.getNowPlaying();    
         });
     }
 
@@ -479,10 +502,21 @@ class Main extends Component {
                     userId={this.state.userId}
                     userDetails={this.state.userDetails}
                     handleLogout={this.handleLogout}
+                    handleSearch={this.handleSearch}
                 />
                 <RegisterModal handleRegister={this.handleRegister} />
                 <LoginModal handleLogin={this.handleLogin} />
                 <div className="container pb-56">
+                    <SearchResults
+                        songs={this.state.songs}
+                        likedSongs={this.state.likedSongs}
+                        userDetails={this.state.userDetails}
+                        handlePlay={this.handlePlay}
+                        handleLike={this.handleLike}
+                        handleRemoveLike={this.handleRemoveLike}  
+                        resultSongs={this.state.resultSongs}              
+                        query={this.state.query}
+                    />
                     {/* <!-- {{#if queue}}
                     <div className="py-3">
                         <h2>Play Queue</h2>
