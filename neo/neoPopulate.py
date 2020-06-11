@@ -8,7 +8,7 @@ def loadneonodes():
  
 #Read the csv file and create the song nodes
     query = """
-    LOAD CSV WITH HEADERS FROM 'file:///dataset.csv' AS column 
+    LOAD CSV WITH HEADERS FROM 'file:///datasetFinal.csv' AS column 
     MERGE (s:Songs{name:column.Song,genre:column.Genre,album:column.Album,duration:column.Duration})
  
     """
@@ -16,7 +16,7 @@ def loadneonodes():
 
 #Read the csv file and create the artist nodes
     query = """
-    LOAD CSV WITH HEADERS FROM 'file:///dataset.csv' AS column MERGE (a:Artists {a_name:column.Artist})
+    LOAD CSV WITH HEADERS FROM 'file:///datasetFinal.csv' AS column MERGE (a:Artists {a_name:column.Artist})
  
     """
     graph.run(query)
@@ -25,14 +25,14 @@ def loadneonodes():
     
 #Read the csv file and create the genre nodes
     query = """
-    LOAD CSV WITH HEADERS FROM 'file:///dataset.csv' AS column MERGE (g:Genres {genre:column.Genre})
+    LOAD CSV WITH HEADERS FROM 'file:///datasetFinal.csv' AS column MERGE (g:Genres {genre:column.Genre})
  
     """
     graph.run(query)
 
 #relation between the artists and the songs
     query = """
-    LOAD CSV WITH HEADERS FROM 'file:///dataset.csv' AS column MERGE (s:Songs{name:column.Song,genre:column.Genre,album:column.Album,duration:column.Duration})
+    LOAD CSV WITH HEADERS FROM 'file:///datasetFinal.csv' AS column MERGE (s:Songs{name:column.Song,genre:column.Genre,album:column.Album,duration:column.Duration})
     MERGE (a:Artists {a_name:column.Artist})
     MERGE (s)-[:CREATED_BY{release:toInteger(column.Year)}]->(a)
  
@@ -44,7 +44,7 @@ def loadneonodes():
 
 #relation between the genre and the songs
     query = """
-    LOAD CSV WITH HEADERS FROM 'file:///dataset.csv' AS column MERGE (s:Songs{name:column.Song,genre:column.Genre,album:column.Album,duration:column.Duration})
+    LOAD CSV WITH HEADERS FROM 'file:///datasetFinal.csv' AS column MERGE (s:Songs{name:column.Song,genre:column.Genre,album:column.Album,duration:column.Duration})
     MERGE (g:Genres {genre:column.Genre})
     MERGE (s)-[:BELONGS_TO]->(g)
  
