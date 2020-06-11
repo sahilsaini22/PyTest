@@ -17,7 +17,9 @@ class Main extends Component {
             nowPlaying: null,
             userId: 'guest',
             userDetails: null,
-            users: []
+            users: [],
+            likedSongs: [],
+            followedUsers: []
         };
     }
 
@@ -32,7 +34,9 @@ class Main extends Component {
         await this.getQueue();
         await this.getNowPlaying();
         if (this.state.userDetails) {
-            await this.getUsers();            
+            await this.getUsers();
+            await this.getLikedSongs();
+            await this.getFollowedUsers();            
         }
     }
 
@@ -77,6 +81,54 @@ class Main extends Component {
             .then(response => {
                 // console.log(response);
                 this.setState({ users: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
+
+    getLikedSongs = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username
+            });
+            fetch('http://localhost:4000/likedSongs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => {
+                if (!response.ok) { console.error(response.message) }
+                return response.json()
+            })
+            .then(response => {
+                console.log(response);
+                this.setState({ likedSongs: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
+
+
+    getFollowedUsers = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username
+            });
+            fetch('http://localhost:4000/followedUsers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => response.json())
+            .then(response => {
+                console.log(response);
+                this.setState({ followedUsers: response.data }, () => { resolve() });
             })
             .catch(err => {
                 console.error(err);
@@ -206,6 +258,8 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
 
+    // TODO prevent same username reg
+
     handleRegister = (registerData) => {
         let body = JSON.stringify({
             username: registerData.username,
@@ -280,7 +334,9 @@ class Main extends Component {
                     window.$('#loginModal').modal('hide');
                     await this.getQueue();
                     await this.getNowPlaying();
-                    await this.getUsers();            
+                    await this.getLikedSongs();
+                    await this.getUsers();
+                    await this.getFollowedUsers();            
                 });    
             } else {
                 window.alert(response.message);
@@ -289,45 +345,130 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
 
-    handleFollow = (userId) => {
-        console.log(userId)
-        // let body = JSON.stringify({
-        //     username: loginData.username,
-        //     password: loginData.password
-        // });
-
-        // fetch('http://localhost:4000/login', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: body
-        // })
-        // .then(response => response.json())
-        // .then(response => {
-        //     if (response.result === "success") {
-        //         localStorage.setItem("token", response.token);
-        //         this.setState({
-        //             userId: response.payload._id,
-        //             userDetails: response.payload
-        //         }, async () => {
-        //             window.$('#loginModal').modal('hide');
-        //             await this.getQueue();
-        //             await this.getNowPlaying();
-        //             await this.getUsers();            
-        //         });    
-        //     } else {
-        //         window.alert(response.message);
-        //     }
-        // })
-        // .catch(err => console.error(err));
+    handleLike = (songId, songName) => {
+        fetch(`http://localhost:4000/like/${songId}`)
+        .then(response => {
+            if (!response.ok) { console.error(response.message) }
+            return response.json()
+        })
+        .then(response => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username,
+                song: songName
+            });
+            
+            fetch('http://localhost:4000/likeSong', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => {
+                if (!response.ok) { console.error(response.message) }
+                return response.json()
+            })
+            .then(response => {
+                this.setState((state) => ({
+                    likedSongs: [...state.likedSongs, songName]
+                }), () => console.log(this.state.likedSongs));
+            })
+            .catch(err => {
+                console.error(err);
+            });    
+        })
+        .catch(err => {
+            console.error(err);
+        });  
     }
 
+    handleRemoveLike = (songId, songName) => {
+        fetch(`http://localhost:4000/removeLike/${songId}`)
+        .then(response => {
+            if (!response.ok) { console.error(response.message) }
+            return response.json()
+        })
+        .then(response => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username,
+                song: songName
+            });
+            fetch('http://localhost:4000/removeLikeSong', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => {
+                if (!response.ok) { console.error(response.message) }
+                return response.json()
+            })
+            .then(response => {
+                this.setState((state) => ({
+                    likedSongs: state.likedSongs.filter(song => song !== songName)
+                }), () => console.log(this.state.likedSongs));
+            })
+            .catch(err => {
+                console.error(err);
+            });    
+        })
+        .catch(err => {
+            console.error(err);
+        });
+    }
+
+    handleFollow = (followedUser, thisUser = this.state.userDetails) => {
+        let body = JSON.stringify({
+            username: thisUser.username,
+            followedUser: followedUser
+        });
+        
+        fetch('http://localhost:4000/followUser', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.result === "success") {
+                this.setState((state) => ({
+                    followedUsers: [...state.followedUsers, followedUser]
+                }), () => console.log(this.state.followedUsers));
+            } else {
+                window.alert(response.message);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    handleRemoveFollow = (unfollowedUser, thisUser = this.state.userDetails) => {
+        let body = JSON.stringify({
+            username: thisUser.username,
+            unfollowedUser: unfollowedUser
+        });
+        
+        fetch('http://localhost:4000/removeFollowUser', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.result === "success") {
+                this.setState((state) => ({
+                    followedUsers: state.followedUsers.filter(name => name !== unfollowedUser)
+                }), () => console.log(this.state.followedUsers));
+            } else {
+                window.alert(response.message);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+    
     handleLogout = () => {
         localStorage.removeItem('token');
         this.setState({
             userId: 'guest',
-            userDetails: null
+            userDetails: null,
+            likedSongs: [],
+            followedUsers: []
         });
     }
 
@@ -357,7 +498,11 @@ class Main extends Component {
 
                     <Songs
                         songs={this.state.songs}
+                        likedSongs={this.state.likedSongs}
+                        userDetails={this.state.userDetails}
                         handlePlay={this.handlePlay}
+                        handleLike={this.handleLike}
+                        handleRemoveLike={this.handleRemoveLike}
                     />
                     <TrendingSongs
                         trendingSongs={this.state.trendingSongs}
@@ -366,7 +511,9 @@ class Main extends Component {
                     <Users
                         users={this.state.users}
                         userDetails={this.state.userDetails}
+                        followedUsers={this.state.followedUsers}
                         handleFollow={this.handleFollow}
+                        handleRemoveFollow={this.handleRemoveFollow}
                     />
                 </div>
 

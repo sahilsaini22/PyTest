@@ -185,10 +185,96 @@ app.post('/previous', (req, res) => {
     res.redirect(`/nowPlaying/${_userId}`);
 });
 
+app.post('/likedSongs', async (req, res) => {
+    try {        
+        let likedSongs = [];                
+        const { username } = req.body;    
+        if (username) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                                
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)return s.name as liked', {temp1: username})
+            .then(function (result) {                                     
+                result.records.forEach(function(record){                                  
+                    likedSongs.push(record._fields[0]);                        
+                });      
+                session.close();
+                res.status(200).json({data: likedSongs});
+            })          
+        } else {
+            res.status(500).json({ message: "No username provided" })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }
+});  
+
 app.get('/like/:_id', (req, res) => {
     const _id = req.params._id;
-    redisClient.zincrby("trending", 2, _id, (err, res) => {});
-    res.redirect('/');
+    redisClient.zincrby("trending", 2, _id, (err, result) => {
+        if (result !== null) {
+            res.status(200).json({ message: result })
+        } else {
+            res.status(500).json({ message: err })
+        }
+    });
+});
+
+app.get('/removeLike/:_id', (req, res) => {
+    const _id = req.params._id;
+    redisClient.zincrby("trending", -2, _id, (err, result) => {
+        if (result !== null) {
+            res.status(200).json({ message: result })
+        } else {
+            res.status(500).json({ message: err })
+        }
+    });
+});
+
+app.post('/likeSong', (req, res) => {
+    try {                        
+        const { username, song } = req.body;    
+        if (username && song) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                                
+            session.run('MATCH (u:User) WHERE u.name=$temp1 MATCH (s:Songs) WHERE s.name=$temp2 MERGE (u)-[:LIKES]->(s)', {temp1: username, temp2: song})
+            .then(function () {                                    
+                session.close();    
+                res.status(200).json({ message: "Neo4j like song success" });
+            })
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        } else {
+            res.status(500).json({ message: "No username and song provided" })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err });
+    }
+});
+
+app.post('/removeLikeSong', (req, res) => {
+    try {                        
+        const { username, song } = req.body;    
+        if (username && song) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                                
+            session.run('MATCH ( n{ name: $temp1 })-[r:LIKES]->(s {name:$temp2})DELETE r', {temp1: username, temp2: song})
+            .then(function () {                                    
+                session.close();    
+                res.status(200).json({ message: "Neo4j unlike song success" });
+            })
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        } else {
+            res.status(500).json({ message: "No username and song provided" })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err });
+    }
 });
 
 app.post('/register', async (req, res) => {
@@ -292,6 +378,76 @@ app.post('/neoGenreAdd', async (req, res) => {
     }
 });
 
+//List of followed users
+app.post('/followedUsers', async (req, res) => {
+    try {        
+        let followedUsers = [];                
+        const { username } = req.body;   
+        if (username) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                                
+            await session.run('MATCH (u:User {name : $temp1}) -[:FOLLOWS]->(a:User)RETURN a.name as followed', {temp1: username})
+            .then(function (result) {                                     
+                result.records.forEach(function(record){   
+                    console.log(record._fields[0]);                                                                       
+                    followedUsers.push(record._fields[0]);                        
+                });      
+                console.log(followedUsers)
+                session.close();
+                return res.json({ result: "success", data: followedUsers, message: "Neo4j followed users fetched" });
+            })          
+            .catch((e) => {
+                return res.json({ result: "error", message: e.message });
+            });        
+        }
+    }
+    catch (e) {
+        return res.json({ result: "error", message: e.message });
+    }
+});   
+
+
+app.post('/followUser', async (req, res) => {
+    try {                        
+        const { username, followedUser } = req.body;    
+        if (username && followedUser) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                                
+            session.run('MATCH(n:User) WHERE n.name= $temp1 MATCH(m:User) WHERE m.name= $temp2 MERGE (n)-[f:FOLLOWS]->(m)', {temp1: username, temp2: followedUser})
+            .then(() => {
+                console.log('node: Neo4j user followed');
+                session.close(); 
+                return res.json({ result: "success", message: "Neo4j user followed" });
+            })
+            .catch((e) => {
+                return res.json({ result: "error", message: e.message });
+            });
+        }
+    } catch (e) {
+        return res.json({ result: "error", message: e.message });
+    }
+});  
+
+app.post('/removeFollowUser', async (req, res) => {
+    try {                        
+        const { username, unfollowedUser } = req.body;    
+        if (username && unfollowedUser) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                                
+            session.run('MATCH ( n{ name: $temp1 })-[f:FOLLOWS]->(s {name:$temp2}) DELETE f', {temp1: username, temp2: unfollowedUser})
+            .then(() => {
+                console.log('node: Neo4j user unfollowed');
+                session.close(); 
+                return res.json({ result: "success", message: "Neo4j user unfollowed" });
+            })
+            .catch((e) => {
+                return res.json({ result: "error", message: e.message });
+            });
+        }
+    } catch (e) {
+        return res.json({ result: "error", message: e.message });
+    }
+});  
 
 // FUNCTIONS
 

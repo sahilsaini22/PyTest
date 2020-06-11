@@ -7,10 +7,12 @@ const Users = (props) => {
                 {username} ({country})
                 <button
                     type="button"
-                    className="btn btn-outline-primary"
-                    onClick={() => {props.handleFollow(_id)}}
+                    className={props.followedUsers.includes(username) ? "btn btn-primary" : "btn btn-outline-primary" }
+                    onClick={() => {
+                        props.followedUsers.includes(username) ? props.handleRemoveFollow(username) : props.handleFollow(username)
+                    }}
                 >
-                    follow
+                    {props.followedUsers.includes(username) ? "followed" : "follow" }
                 </button>
             </li>
             : null

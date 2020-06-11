@@ -12,13 +12,19 @@ const Songs = (props) => {
                 >
                     play
                 </button>
-                <button
-                    type="button"
-                    className="btn btn-outline-success"
-                    href={'/like/' + _id}
-                >
-                    like
-                </button>
+                {
+                    props.userDetails ? 
+                    <button
+                        type="button"
+                        className={props.likedSongs.includes(Song) ? "btn btn-success" : "btn btn-outline-success"}
+                        onClick={() => {
+                            props.likedSongs.includes(Song) ? props.handleRemoveLike(_id, Song) : props.handleLike(_id, Song)}
+                        }
+                    >
+                        {props.likedSongs.includes(Song) ? "liked" : "like"}
+                    </button>
+                    : null
+                }
             </li>        
         );
         
@@ -30,6 +36,8 @@ const Songs = (props) => {
                 </ul>
             </div>
         );
+    } else {
+        return null;
     }
 }
 

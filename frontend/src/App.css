@@ -10,3 +10,8 @@
 .genresDiv {
   width: 148px;
 }
+
+.btn:focus, .btn:active {
+  outline: none;
+  box-shadow: none;
+}
