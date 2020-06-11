@@ -207,7 +207,7 @@ app.post('/likedSongs', async (req, res) => {
         if (username) {
             const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
             const session = driver.session();                                                
-            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)return s.name as liked', {temp1: username})
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)RETURN s.name AS liked', {temp1: username})
             .then(function (result) {                                     
                 result.records.forEach(function(record){                                  
                     likedSongs.push(record._fields[0]);                        
@@ -379,7 +379,7 @@ app.post('/neoGenreAdd', async (req, res) => {
         const { username, likedGenres } = req.body;    
         const neoDriver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
         const neoSession = neoDriver.session();                                
-        neoSession.run('MERGE (u:User {name: $temp3}) WITH u UNWIND $temp4 AS genre MERGE (g:Genres {genre: genre})MERGE (u)-[:LIKES]->(g)', {temp3: username, temp4: likedGenres})
+        neoSession.run('MERGE (u:User {name: $temp3}) WITH u UNWIND $temp4 AS genre MERGE (g:Genres {genre: genre})MERGE (u)-[:PREFERS]->(g)', {temp3: username, temp4: likedGenres})
         .then(() => {
             console.log('node: Neo4j user-genre relationship added');
             neoSession.close();
@@ -401,7 +401,7 @@ app.post('/followedUsers', async (req, res) => {
         if (username) {
             const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
             const session = driver.session();                                                
-            await session.run('MATCH (u:User {name : $temp1}) -[:FOLLOWS]->(a:User)RETURN a.name as followed', {temp1: username})
+            await session.run('MATCH (u:User {name : $temp1}) -[:FOLLOWS]->(a:User)RETURN a.name AS followed', {temp1: username})
             .then(function (result) {                                     
                 result.records.forEach(function(record){   
                     console.log(record._fields[0]);                                                                       
@@ -463,6 +463,55 @@ app.post('/removeFollowUser', async (req, res) => {
         return res.json({ result: "error", message: e.message });
     }
 });  
+
+// DISCOVERY
+
+//Songs of artist liked by user
+app.post('/discovery/artistSongs', async (req, res) => {
+    try {            
+        var songs = [];
+        var allsongs = [];
+        var eliminate = [];
+        const { username } = req.body;    
+        
+        if (username) {                
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();   
+                                               
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)-[r:CREATED_BY]->(a:Artists)-[x:CREATED_BY]-(y:Songs)RETURN y.name AS Allsongs ,COUNT(r) ORDER BY COUNT(r) DESC', {temp1: username})
+            .then(function (result) {    
+                result.records.forEach(function(record){   
+                    allsongs.push(record._fields[0]);                        
+                });                                
+                console.log("All songs: " + allsongs);            
+            }) 
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+            
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)RETURN s.name AS Eliminate', {temp1: username})                            
+            .then(function (result) {                
+                result.records.forEach(function(record){  
+                    eliminate.push(record._fields[0]);
+                });
+                songs = allsongs.filter(element => !eliminate.includes(element) );
+                if (songs.length > 10) {
+                    songs.splice(10);
+                }
+                session.close();    
+                res.status(200).json({data: songs});
+            })       
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        } else {
+            res.status(500).json({ message: "No username provided" })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }            
+});
 
 // FUNCTIONS
 

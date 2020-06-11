@@ -8,6 +8,7 @@ import RegisterModal from './registerModal.js';
 import LoginModal from './loginModal.js';
 import Users from './users.js';
 import SearchResults from './searchResults.js';
+import LikedArtistSongs from './likedArtistSongs.js';
 
 class Main extends Component {
     constructor(props) {
@@ -24,6 +25,7 @@ class Main extends Component {
             followedUsers: [],
             query: '',
             resultSongs: [],
+            likedArtistSongs: []
         };
     }
 
@@ -40,7 +42,8 @@ class Main extends Component {
         if (this.state.userDetails) {
             await this.getUsers();
             await this.getLikedSongs();
-            await this.getFollowedUsers();            
+            await this.getFollowedUsers();      
+            await this.discoverLikedArtistSongs();      
         }
     }
 
@@ -196,6 +199,28 @@ class Main extends Component {
         })
     }
 
+    discoverLikedArtistSongs = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username
+            });
+            fetch('http://localhost:4000/discovery/artistSongs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => response.json())
+            .then(response => {
+                console.log('discover liked artist songs: ' + response.data);
+                this.setState({ likedArtistSongs: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
+
     handlePlay = (songId) => {
         let body = JSON.stringify({
             _songId: songId,
@@ -340,7 +365,8 @@ class Main extends Component {
                     await this.getNowPlaying();
                     await this.getLikedSongs();
                     await this.getUsers();
-                    await this.getFollowedUsers();            
+                    await this.getFollowedUsers();        
+                    await this.discoverLikedArtistSongs();    
                 });    
             } else {
                 window.alert(response.message);
@@ -373,7 +399,10 @@ class Main extends Component {
             .then(response => {
                 this.setState((state) => ({
                     likedSongs: [...state.likedSongs, songName]
-                }), () => console.log(this.state.likedSongs));
+                }), async () => {
+                    console.log(this.state.likedSongs);
+                    await this.discoverLikedArtistSongs();
+                });
             })
             .catch(err => {
                 console.error(err);
@@ -407,7 +436,10 @@ class Main extends Component {
             .then(response => {
                 this.setState((state) => ({
                     likedSongs: state.likedSongs.filter(song => song !== songName)
-                }), () => console.log(this.state.likedSongs));
+                }), async () => {
+                    console.log(this.state.likedSongs);
+                    await this.discoverLikedArtistSongs();
+                });
             })
             .catch(err => {
                 console.error(err);
@@ -434,7 +466,9 @@ class Main extends Component {
             if (response.result === "success") {
                 this.setState((state) => ({
                     followedUsers: [...state.followedUsers, followedUser]
-                }), () => console.log(this.state.followedUsers));
+                }), () => {
+                    console.log(this.state.followedUsers);
+                });
             } else {
                 window.alert(response.message);
             }
@@ -541,6 +575,9 @@ class Main extends Component {
                     <TrendingSongs
                         trendingSongs={this.state.trendingSongs}
                         userDetails={this.state.userDetails}
+                    />
+                    <LikedArtistSongs
+                        likedArtistSongs={this.state.likedArtistSongs}
                     />
                     <Users
                         users={this.state.users}
