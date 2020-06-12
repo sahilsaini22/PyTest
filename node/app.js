@@ -1,7 +1,6 @@
 const express = require('express')
 const expressHandlebars = require('express-handlebars');
 const cors = require('cors');
-const path = require('path');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const redis = require('redis');
@@ -27,6 +26,8 @@ let redisClient = redis.createClient();
 redisClient.on('connect', () => {
     console.log('Connected to Redis');
 });
+const trendingSongsKey = "trendingSongs"
+const trendingArtistsKey = "trendingArtists"
 
 app.engine('handlebars', expressHandlebars({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
@@ -41,7 +42,6 @@ app.get('/songs', async (req, res) => {
     const _songs = await client.db("MUSICDB").collection("songs").find();
     const songs = await _songs.toArray();
     if (songs) {
-        // console.log(songs);
         return res.json({
             data: songs
         });
@@ -51,7 +51,6 @@ app.get('/songs', async (req, res) => {
 });
 
 app.get('/searchSongs/:query', async (req, res) => {
-    // const query = decodeURI(req.params.query);
     const query = req.params.query;
     const regexp = new RegExp(query,"i");
     const _searchResults = await client.db("MUSICDB").collection("songs").find({Song: regexp});
@@ -62,6 +61,31 @@ app.get('/searchSongs/:query', async (req, res) => {
         });
     } else {
         return null;
+    }
+});
+
+app.get('/songArtist/:song', async (req, res) => {
+    const song = req.params.song;
+    try {        
+        let artists = [];                
+        const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
+        const session = driver.session();        
+        session.run('MATCH (s:Songs {name : $temp1}) -[x:CREATED_BY]-(a:Artists) RETURN a.a_name', {temp1: song})
+        .then(function (result) {                                     
+            result.records.forEach(function(record){                                  
+                artists.push(record._fields[0]);                        
+            });      
+            console.log('song: ' + song);
+            console.log('artists: ' + artists);
+            session.close();
+            res.status(200).json({data: artists});
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err })
+        })
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
     }
 });
 
@@ -79,11 +103,23 @@ app.get('/users', async (req, res) => {
 });
 
 app.get('/trendingSongs', async (req, res) => {
-    redisClient.zrevrange("trending", 0, 9, async (err, trendingSongIDs) => {
+    redisClient.zrevrange(trendingSongsKey, 0, 9, async (err, trendingSongIDs) => {
         const trendingSongs = await Promise.all(trendingSongIDs.map(songID => getSong(songID)))
         if (trendingSongs) {
             return res.json({
                 data: trendingSongs
+            });    
+        } else {
+            return null;
+        }
+    });
+});
+
+app.get('/trendingArtists', async (req, res) => {
+    redisClient.zrevrange(trendingArtistsKey, 0, 9, async (err, trendingArtists) => {
+        if (trendingArtists) {
+            return res.json({
+                data: trendingArtists
             });    
         } else {
             return null;
@@ -138,9 +174,22 @@ app.post('/play', (req, res) => {
         redisClient.hset(userListKey, "nowPlaying", listLength - 1);
     });
 
-    redisClient.zincrby("trending", 1, _songId);
+    redisClient.zincrby(trendingSongsKey, 1, _songId);
 
     res.redirect(`/nowPlaying/${_userId}`);
+});
+
+app.post('/incrementArtistScore', (req, res) => {
+    const artist = req.body.artist;
+    const scoreIncrement = req.body.scoreIncrement;
+
+    redisClient.zincrby(trendingArtistsKey, scoreIncrement, artist, (err, newScore) => {
+        if (newScore !== null) {
+            res.status(200).json({data: newScore});
+        } else {
+            res.status(500).json({ message: err })
+        }
+    });
 });
 
 // app.post('/playNext', (req, res) => {
@@ -184,7 +233,7 @@ app.post('/skip', (req, res) => {
     const userListKey = "user:" + _userId;
 
     redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
-    redisClient.zincrby("trending", -1, _songId, (err, res) => {});
+    redisClient.zincrby(trendingSongsKey, -1, _songId, (err, res) => {});
 
     res.redirect(`/nowPlaying/${_userId}`);
 });
@@ -226,7 +275,7 @@ app.post('/likedSongs', async (req, res) => {
 
 app.get('/like/:_id', (req, res) => {
     const _id = req.params._id;
-    redisClient.zincrby("trending", 2, _id, (err, result) => {
+    redisClient.zincrby(trendingSongsKey, 2, _id, (err, result) => {
         if (result !== null) {
             res.status(200).json({ message: result })
         } else {
@@ -237,7 +286,7 @@ app.get('/like/:_id', (req, res) => {
 
 app.get('/removeLike/:_id', (req, res) => {
     const _id = req.params._id;
-    redisClient.zincrby("trending", -2, _id, (err, result) => {
+    redisClient.zincrby(trendingSongsKey, -2, _id, (err, result) => {
         if (result !== null) {
             res.status(200).json({ message: result })
         } else {
@@ -505,7 +554,7 @@ app.post('/discovery/artistSongs', async (req, res) => {
                 res.status(500).json({ message: err })
             })
         } else {
-            res.status(500).json({ message: "No username provided" })
+            res.status(200).json({ data: null })
         }
     }
     catch (err) {

@@ -8,7 +8,7 @@ const Songs = (props) => {
                 <button
                     type="button"
                     className="btn btn-outline-primary"
-                    onClick={() => {props.handlePlay(_id)}}
+                    onClick={() => {props.handlePlay(_id, Song)}}
                 >
                     play
                 </button>

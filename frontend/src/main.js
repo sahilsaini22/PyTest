@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
-import Router from './router.js';
 import Navbar from './navbar.js';
 import NowPlaying from './nowPlaying.js';
 import Songs from './songs.js';
 import TrendingSongs from './trendingSongs.js';
+import TrendingArtists from './trendingArtists.js';
 import RegisterModal from './registerModal.js';
 import LoginModal from './loginModal.js';
 import Users from './users.js';
@@ -16,6 +16,7 @@ class Main extends Component {
         this.state = {
             songs: [],
             trendingSongs: [],
+            trendingArtists: [],
             queue: [],
             nowPlaying: null,
             userId: 'guest',
@@ -37,6 +38,7 @@ class Main extends Component {
         await this.getCurrentUser();
         await this.getSongs();
         await this.getTrendingSongs();
+        await this.getTrendingArtists();
         await this.getQueue();
         await this.getNowPlaying();
         if (this.state.userDetails) {
@@ -46,6 +48,18 @@ class Main extends Component {
             await this.discoverLikedArtistSongs();      
         }
     }
+
+    getSongArtist = (song) => {
+        return new Promise(resolve => {
+            fetch(`http://localhost:4000/songArtist/${song}`)
+            .then(response => response.json())
+            .then(response => { resolve(response.data) })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });        
+        });
+    };
 
     getUserToken = () => {
         return localStorage.getItem('token');
@@ -171,6 +185,21 @@ class Main extends Component {
         })
     }
 
+    getTrendingArtists = () => {
+        return new Promise(resolve => {
+            fetch('http://localhost:4000/trendingArtists')
+            .then(response => response.json())
+            .then(response => this.setState({ trendingArtists: response.data }, () => {
+                console.log(this.state.trendingArtists); 
+                resolve();
+            }))
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        })
+    }
+
     getQueue = () => {
         return new Promise (resolve => {
             fetch(`http://localhost:4000/queue/${this.state.userId}`)
@@ -202,7 +231,7 @@ class Main extends Component {
     discoverLikedArtistSongs = () => {
         return new Promise(resolve => {
             let body = JSON.stringify({
-                username: this.state.userDetails.username
+                username: this.state.userDetails ? this.state.userDetails.username : null
             });
             fetch('http://localhost:4000/discovery/artistSongs', {
                 method: 'POST',
@@ -211,7 +240,6 @@ class Main extends Component {
             })
             .then(response => response.json())
             .then(response => {
-                console.log('discover liked artist songs: ' + response.data);
                 this.setState({ likedArtistSongs: response.data }, () => { resolve() });
             })
             .catch(err => {
@@ -221,7 +249,7 @@ class Main extends Component {
         });
     }
 
-    handlePlay = (songId) => {
+    handlePlay = (songId, songName) => {
         let body = JSON.stringify({
             _songId: songId,
             _userId: this.state.userId,
@@ -230,9 +258,7 @@ class Main extends Component {
 
         fetch('http://localhost:4000/play', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: body
         })
         .then(response => response.json())
@@ -240,6 +266,29 @@ class Main extends Component {
             this.setState({ nowPlaying: response.data }, async () => {
                 await this.getQueue();
                 await this.getTrendingSongs();
+                await this.getSongArtist(songName).then((songArtists) => {
+                    songArtists.forEach(songArtist => {                    
+                        let incrementArtistBody = JSON.stringify({
+                            artist: songArtist,
+                            scoreIncrement: 1
+                        });
+                        fetch('http://localhost:4000/incrementArtistScore', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: incrementArtistBody
+                        })
+                        .then(response => {
+                            if (!response.ok) { console.error(response.message) }
+                            return response.json()
+                        })
+                        .then(async (response) => {
+                            await this.getTrendingArtists();                            
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });    
+                    });
+                });
             })
         })
         .catch(err => console.error(err));
@@ -576,8 +625,13 @@ class Main extends Component {
                         trendingSongs={this.state.trendingSongs}
                         userDetails={this.state.userDetails}
                     />
+                    <TrendingArtists 
+                        trendingArtists={this.state.trendingArtists}
+                        userDetails={this.state.userDetails}
+                    />
                     <LikedArtistSongs
                         likedArtistSongs={this.state.likedArtistSongs}
+                        userDetails={this.state.userDetails}
                     />
                     <Users
                         users={this.state.users}

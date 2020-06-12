@@ -11,7 +11,7 @@ class SearchResults extends Component {
                     <button
                         type="button"
                         className="btn btn-outline-primary"
-                        onClick={() => {this.props.handlePlay(_id)}}
+                        onClick={() => {this.props.handlePlay(_id, Song)}}
                     >
                         play
                     </button>

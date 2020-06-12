@@ -2,7 +2,7 @@ import React from 'react';
 
 const LikedArtistSongs = (props) => {
     console.log(props)
-    if (props.likedArtistSongs.length > 0) {
+    if (props.userDetails && props.likedArtistSongs && props.likedArtistSongs.length > 0) {
         let songs = props.likedArtistSongs.map(Song => 
             <li className="list-group-item list-group-item-action" key={Song}>
                 {Song}

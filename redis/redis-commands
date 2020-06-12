@@ -22,6 +22,7 @@ lrange queue:guest 0 -1
 del queue:guest
 
 del trending
+del trendingArtists
 
 hget user:guest nowPlaying
 hdel user:guest nowPlaying
