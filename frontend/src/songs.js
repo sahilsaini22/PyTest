@@ -29,12 +29,22 @@ const Songs = (props) => {
         );
         
         return (
-            <div className="py-3">
-                <h2>Play songs</h2>
-                <ul className="list-group list-group-horizontal overflow-auto">
-                    {songs}
-                </ul>
-            </div>
+            <>
+                <div className="py-3">
+                    <h2>Play songs</h2>
+                    <ul className="list-group list-group-horizontal overflow-auto">
+                        {songs}
+                    </ul>
+                </div>
+                {
+                    !props.userDetails ? 
+                    <div className="py-3">
+                        <h3>Register now to get song recommendations and more!</h3>
+                    </div>
+                    : null
+                }        
+            </>
+
         );
     } else {
         return null;

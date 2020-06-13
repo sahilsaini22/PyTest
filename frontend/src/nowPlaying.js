@@ -13,7 +13,7 @@ const NowPlaying = (props) => {
             <button
                 type="button"
                 className="btn btn-outline-secondary"
-                onClick={() => {props.handleSkip(nowPlaying._id)}}
+                onClick={() => {props.handleSkip(nowPlaying._id, nowPlaying.Song)}}
             >
                 skip
             </button>

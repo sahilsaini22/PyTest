@@ -294,7 +294,7 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
 
-    handleSkip = (songId) => {
+    handleSkip = (songId, songName) => {
         let body = JSON.stringify({
             _songId: songId,
             _userId: this.state.userId,
@@ -310,7 +310,31 @@ class Main extends Component {
         })
         .then(response => response.json())
         .then(response => {
-            this.setState({ nowPlaying: response.data })
+            this.setState({ nowPlaying: response.data }, async () => {
+                await this.getSongArtist(songName).then((songArtists) => {
+                    songArtists.forEach(songArtist => {                    
+                        let incrementArtistBody = JSON.stringify({
+                            artist: songArtist,
+                            scoreIncrement: -1
+                        });
+                        fetch('http://localhost:4000/incrementArtistScore', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: incrementArtistBody
+                        })
+                        .then(response => {
+                            if (!response.ok) { console.error(response.message) }
+                            return response.json()
+                        })
+                        .then(async (response) => {
+                            await this.getTrendingArtists();                            
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });    
+                    });
+                });
+            })            
         })
         .catch(err => console.error(err));
     }
@@ -359,7 +383,10 @@ class Main extends Component {
             this.setState({
                 userId: response.data._id,
                 userDetails: response.data
-            }, () => {
+            }, async () => {
+                await this.getQueue();
+                await this.getNowPlaying();
+
                 fetch('http://localhost:4000/neoUserAdd', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -430,32 +457,55 @@ class Main extends Component {
             if (!response.ok) { console.error(response.message) }
             return response.json()
         })
-        .then(response => {
-            let body = JSON.stringify({
-                username: this.state.userDetails.username,
-                song: songName
-            });
-            
-            fetch('http://localhost:4000/likeSong', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
-            })
-            .then(response => {
-                if (!response.ok) { console.error(response.message) }
-                return response.json()
-            })
-            .then(response => {
-                this.setState((state) => ({
-                    likedSongs: [...state.likedSongs, songName]
-                }), async () => {
-                    console.log(this.state.likedSongs);
-                    await this.discoverLikedArtistSongs();
+        .then(async (response) => {
+            await this.getSongArtist(songName).then((songArtists) => {
+                songArtists.forEach(songArtist => {                    
+                    let incrementArtistBody = JSON.stringify({
+                        artist: songArtist,
+                        scoreIncrement: 2
+                    });
+                    fetch('http://localhost:4000/incrementArtistScore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: incrementArtistBody
+                    })
+                    .then(response => {
+                        if (!response.ok) { console.error(response.message) }
+                        return response.json()
+                    })
+                    .then(async (response) => {
+                        await this.getTrendingArtists();         
+                                     
+                        let body = JSON.stringify({
+                            username: this.state.userDetails.username,
+                            song: songName
+                        });
+                        fetch('http://localhost:4000/likeSong', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: body
+                        })
+                        .then(response => {
+                            if (!response.ok) { console.error(response.message) }
+                            return response.json()
+                        })
+                        .then(response => {
+                            this.setState((state) => ({
+                                likedSongs: [...state.likedSongs, songName]
+                            }), async () => {
+                                console.log(this.state.likedSongs);
+                                await this.discoverLikedArtistSongs();
+                            });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });    
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });    
                 });
-            })
-            .catch(err => {
-                console.error(err);
-            });    
+            });
         })
         .catch(err => {
             console.error(err);
@@ -468,31 +518,55 @@ class Main extends Component {
             if (!response.ok) { console.error(response.message) }
             return response.json()
         })
-        .then(response => {
-            let body = JSON.stringify({
-                username: this.state.userDetails.username,
-                song: songName
-            });
-            fetch('http://localhost:4000/removeLikeSong', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
-            })
-            .then(response => {
-                if (!response.ok) { console.error(response.message) }
-                return response.json()
-            })
-            .then(response => {
-                this.setState((state) => ({
-                    likedSongs: state.likedSongs.filter(song => song !== songName)
-                }), async () => {
-                    console.log(this.state.likedSongs);
-                    await this.discoverLikedArtistSongs();
+        .then(async (response) => {
+            await this.getSongArtist(songName).then((songArtists) => {
+                songArtists.forEach(songArtist => {                    
+                    let incrementArtistBody = JSON.stringify({
+                        artist: songArtist,
+                        scoreIncrement: -2
+                    });
+                    fetch('http://localhost:4000/incrementArtistScore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: incrementArtistBody
+                    })
+                    .then(response => {
+                        if (!response.ok) { console.error(response.message) }
+                        return response.json()
+                    })
+                    .then(async (response) => {
+                        await this.getTrendingArtists();   
+                          
+                        let body = JSON.stringify({
+                            username: this.state.userDetails.username,
+                            song: songName
+                        });
+                        fetch('http://localhost:4000/removeLikeSong', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: body
+                        })
+                        .then(response => {
+                            if (!response.ok) { console.error(response.message) }
+                            return response.json()
+                        })
+                        .then(response => {
+                            this.setState((state) => ({
+                                likedSongs: state.likedSongs.filter(song => song !== songName)
+                            }), async () => {
+                                console.log(this.state.likedSongs);
+                                await this.discoverLikedArtistSongs();
+                            });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });    
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });    
                 });
-            })
-            .catch(err => {
-                console.error(err);
-            });    
+            });
         })
         .catch(err => {
             console.error(err);

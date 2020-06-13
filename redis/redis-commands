@@ -10,6 +10,8 @@ zrevrange trending 0 -1 withscores
 zrevrange trending 0 3
 zrevrank trending "song3"
 
+zrevrange trendingArtists 0 -1 withscores
+
 zscore trending "song5"
 
 zincrby trending -1 "song5"
