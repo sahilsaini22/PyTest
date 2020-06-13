@@ -5,7 +5,26 @@ const TrendingSongs = (props) => {
         let trendingSongs = props.trendingSongs.map(({_id, Song, Year}) => 
             <li className="list-group-item list-group-item-action" key={_id}>
                 {Song} ({Year})
-                <p><a href={'/play/' + _id}>play</a> <a href={'/like/' + _id}>like</a></p>
+                <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => {props.handlePlay(_id, Song)}}
+                >
+                    play
+                </button>
+                {
+                    props.userDetails ? 
+                    <button
+                        type="button"
+                        className={props.likedSongs.includes(Song) ? "btn btn-success btn-sm" : "btn btn-outline-success btn-sm"}
+                        onClick={() => {
+                            props.likedSongs.includes(Song) ? props.handleRemoveLike(_id, Song) : props.handleLike(_id, Song)}
+                        }
+                    >
+                        {props.likedSongs.includes(Song) ? "liked" : "like"}
+                    </button>
+                    : null
+                }
             </li>        
         );
         
