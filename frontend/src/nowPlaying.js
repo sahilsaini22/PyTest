@@ -42,12 +42,9 @@ const NowPlaying = (props) => {
                     </div>
                 </div> 
                 <div className="container">
-                    <div>
-                        <ul className="list-group list-group-horizontal overflow-auto">
-                            {queue}
-                        </ul>
-                    </div>
-
+                    <ul className="list-group list-group-horizontal overflow-auto">
+                        {queue}
+                    </ul>
                     {/* {{#if nowPlaying}}
                     <p>nowPlaying: {{ nowPlaying }}</p>
                     {{/if}}

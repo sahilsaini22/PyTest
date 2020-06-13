@@ -7,7 +7,7 @@ const Songs = (props) => {
                 {Song} ({Year})
                 <button
                     type="button"
-                    className="btn btn-outline-primary"
+                    className="btn btn-outline-primary btn-sm"
                     onClick={() => {props.handlePlay(_id, Song)}}
                 >
                     play
@@ -16,7 +16,7 @@ const Songs = (props) => {
                     props.userDetails ? 
                     <button
                         type="button"
-                        className={props.likedSongs.includes(Song) ? "btn btn-success" : "btn btn-outline-success"}
+                        className={props.likedSongs.includes(Song) ? "btn btn-success btn-sm" : "btn btn-outline-success btn-sm"}
                         onClick={() => {
                             props.likedSongs.includes(Song) ? props.handleRemoveLike(_id, Song) : props.handleLike(_id, Song)}
                         }

@@ -5,6 +5,13 @@ const TrendingArtists = (props) => {
         let trendingArtists = props.trendingArtists.map((artist) => 
             <li className="list-group-item list-group-item-action" key={artist}>
                 {artist}
+                <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => {props.handleSearch(artist)}}
+                >
+                    songs by {artist}
+                </button>
             </li>        
         );
         

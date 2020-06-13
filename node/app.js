@@ -60,7 +60,9 @@ app.get('/searchSongs/:query', async (req, res) => {
             data: searchResults
         });
     } else {
-        return null;
+        return res.json({
+            data: []
+        });
     }
 });
 
@@ -72,13 +74,38 @@ app.get('/songArtist/:song', async (req, res) => {
         const session = driver.session();        
         session.run('MATCH (s:Songs {name : $temp1}) -[x:CREATED_BY]-(a:Artists) RETURN a.a_name', {temp1: song})
         .then(function (result) {                                     
-            result.records.forEach(function(record){                                  
+            result.records.forEach(function(record) {                                  
                 artists.push(record._fields[0]);                        
             });      
             console.log('song: ' + song);
             console.log('artists: ' + artists);
             session.close();
             res.status(200).json({data: artists});
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err })
+        })
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }
+});
+
+app.get('/artistSongs/:artistName', async (req, res) => {
+    const artistName = req.params.artistName;
+    try {        
+        let songs = [];                
+        const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
+        const session = driver.session();        
+        session.run('MATCH (s:Songs) -[:CREATED_BY]->(a:Artists) WHERE toLower(a.a_name) = toLower($temp1) RETURN s.name', {temp1: artistName})
+        .then(async (result) => {                                     
+            result.records.forEach(function(record) {                                  
+                songs.push(record._fields[0]);                        
+            });      
+            console.log('artist: ' + artistName + ', songs: ' + songs );
+            session.close();
+            const songsAsObject = await Promise.all(songs.map(songTitle => getSongFromTitle(songTitle)))
+            res.status(200).json({data: songsAsObject});
         })
         .catch((err) => {
             res.status(500).json({ message: err })
@@ -576,6 +603,15 @@ const getSong = async (id) => {
     }
 };
 
+const getSongFromTitle = async (songTitle) => {
+    const song = await client.db("MUSICDB").collection("songs").findOne({ Song: songTitle });
+    if (song) {
+        return song;
+    } else {
+        console.log('No song found with title: ' + songTitle);
+        return null;
+    }
+};
 
 app.listen(port, () => console.log(`Server started at http://localhost:${port}`));
 

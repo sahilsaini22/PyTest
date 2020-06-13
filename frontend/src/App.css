@@ -2,6 +2,10 @@
   padding-bottom: 56px; 
 }
 
+.pb-220 {
+  padding-bottom: 220px; 
+}
+
 .genresContainer {
   display: flex;
   flex-wrap: wrap;
@@ -14,4 +18,12 @@
 .btn:focus, .btn:active {
   outline: none;
   box-shadow: none;
+}
+
+.bg-gainsboro {
+  background-color: lightblue;
+}
+
+.width-320 {
+  width: 320px !important;
 }

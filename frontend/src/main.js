@@ -26,6 +26,7 @@ class Main extends Component {
             followedUsers: [],
             query: '',
             resultSongs: [],
+            resultArtistSongs: [],
             likedArtistSongs: []
         };
     }
@@ -386,6 +387,7 @@ class Main extends Component {
             }, async () => {
                 await this.getQueue();
                 await this.getNowPlaying();
+                await this.getUsers();
 
                 fetch('http://localhost:4000/neoUserAdd', {
                     method: 'POST',
@@ -494,6 +496,7 @@ class Main extends Component {
                                 likedSongs: [...state.likedSongs, songName]
                             }), async () => {
                                 console.log(this.state.likedSongs);
+                                await this.getTrendingSongs();
                                 await this.discoverLikedArtistSongs();
                             });
                         })
@@ -555,6 +558,7 @@ class Main extends Component {
                                 likedSongs: state.likedSongs.filter(song => song !== songName)
                             }), async () => {
                                 console.log(this.state.likedSongs);
+                                await this.getTrendingSongs();
                                 await this.discoverLikedArtistSongs();
                             });
                         })
@@ -632,13 +636,28 @@ class Main extends Component {
             this.setState({
                 query: searchQuery,
                 resultSongs: response.data
+            }, () => {
+                fetch(`http://localhost:4000/artistSongs/${searchQuery}`)
+                .then(response => response.json())
+                .then(response => {
+                    console.log(response);
+                    this.setState({
+                        resultArtistSongs: response.data
+                    }, async () => {
+                        await this.getLikedSongs();
+                        window.scrollTo(0,0);
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                });            
             });
         })
         .catch(err => {
             console.error(err);
         });    
     }
-
+    
     handleLogout = () => {
         localStorage.removeItem('token');
         this.setState({
@@ -663,7 +682,7 @@ class Main extends Component {
                 />
                 <RegisterModal handleRegister={this.handleRegister} />
                 <LoginModal handleLogin={this.handleLogin} />
-                <div className="container pb-56">
+                <div className="container pb-220">
                     <SearchResults
                         songs={this.state.songs}
                         likedSongs={this.state.likedSongs}
@@ -671,7 +690,8 @@ class Main extends Component {
                         handlePlay={this.handlePlay}
                         handleLike={this.handleLike}
                         handleRemoveLike={this.handleRemoveLike}  
-                        resultSongs={this.state.resultSongs}              
+                        resultSongs={this.state.resultSongs}
+                        resultArtistSongs={this.state.resultArtistSongs}              
                         query={this.state.query}
                     />
                     {/* <!-- {{#if queue}}
@@ -698,10 +718,15 @@ class Main extends Component {
                     <TrendingSongs
                         trendingSongs={this.state.trendingSongs}
                         userDetails={this.state.userDetails}
+                        handlePlay={this.handlePlay}
+                        handleLike={this.handleLike}
+                        handleRemoveLike={this.handleRemoveLike}
+                        likedSongs={this.state.likedSongs}
                     />
                     <TrendingArtists 
                         trendingArtists={this.state.trendingArtists}
                         userDetails={this.state.userDetails}
+                        handleSearch={this.handleSearch}
                     />
                     <LikedArtistSongs
                         likedArtistSongs={this.state.likedArtistSongs}

@@ -34,7 +34,6 @@ class Navbar extends Component {
                         <ul className="navbar-nav mr-auto">
                             {navLinks}
                         </ul>
-
                         <Formik
                             initialValues={{
                                 query: '',
@@ -54,9 +53,9 @@ class Navbar extends Component {
                             {({ isSubmitting }) => (
                                 <Form className="form-inline my-2 my-lg-0">
                                     <div className="form-group">
-                                        <Field type="search" name="query" placeholder="Search songs" className="form-control mr-sm-2" />
+                                        <Field type="search" name="query" placeholder="Search songs, artists" className="form-control mr-sm-2 width-320" />
                                     </div>
-                                    <button type="submit" disabled={isSubmitting} className="btn btn-outline-success my-2 my-sm-0">
+                                    <button type="submit" disabled={isSubmitting} className="btn btn-outline-secondary my-2 my-sm-0">
                                         Search
                                     </button>
                                 </Form>
