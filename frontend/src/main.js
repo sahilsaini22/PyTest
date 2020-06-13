@@ -368,7 +368,7 @@ class Main extends Component {
                 .then(response => response.json())
                 .then(response => {
                     console.log(response);
-                    if (registerData.likedGenres) {
+                    if (registerData.likedGenres && registerData.likedGenres.length > 0) {
                         fetch('http://localhost:4000/neoGenreAdd', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },

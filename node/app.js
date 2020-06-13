@@ -417,6 +417,8 @@ app.post('/neoUserAdd', async (req, res) => {
             .catch((e) => {
                 return res.json({ result: "error", message: e.message });
             });
+        } else {
+            return res.json({ result: "error", message: "Neo4j user not created: role not user" });
         }
     } catch (e) {
         return res.json({ result: "error", message: e.message });

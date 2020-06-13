@@ -66,44 +66,45 @@ class RegisterModal extends Component {
                                             <option value="Philippines">Philippines</option>
                                         </Field>
                                     </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="likedGenres">Genres I Like</label>
-                                        <FieldArray
-                                            name="likedGenres"
-                                            render={arrayHelpers => (
-                                            <div className="genresContainer form-check">
-                                                {genres.map(genre => (
-                                                    <div 
-                                                        key={genre.name}
-                                                        className="genresDiv"
-                                                    >
-                                                        <input
-                                                            id={genre.name}
-                                                            name="likedGenres"
-                                                            type="checkbox"
-                                                            value={genre.name}
-                                                            checked={values.likedGenres.includes(genre.name)}
-                                                            onChange={e => {
-                                                                if (e.target.checked) {
-                                                                    arrayHelpers.push(genre.name);
-                                                                } else {
-                                                                    const index = values.likedGenres.indexOf(genre.name);
-                                                                    arrayHelpers.remove(index);
-                                                                }
-                                                            }}
-                                                            className="form-check-input"
-                                                        />
-                                                        <label htmlFor={genre.name} className="form-check-label">
-                                                            {genre.name}
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            )}
-                                        />
-                                    </div>
-
+                                    {values.role === 'user' ? 
+                                        <div className="form-group">
+                                            <label htmlFor="likedGenres">Genres I Like</label>
+                                            <FieldArray
+                                                name="likedGenres"
+                                                render={arrayHelpers => (
+                                                <div className="genresContainer form-check">
+                                                    {genres.map(genre => (
+                                                        <div 
+                                                            key={genre.name}
+                                                            className="genresDiv"
+                                                        >
+                                                            <input
+                                                                id={genre.name}
+                                                                name="likedGenres"
+                                                                type="checkbox"
+                                                                value={genre.name}
+                                                                checked={values.likedGenres.includes(genre.name)}
+                                                                onChange={e => {
+                                                                    if (e.target.checked) {
+                                                                        arrayHelpers.push(genre.name);
+                                                                    } else {
+                                                                        const index = values.likedGenres.indexOf(genre.name);
+                                                                        arrayHelpers.remove(index);
+                                                                    }
+                                                                }}
+                                                                className="form-check-input"
+                                                            />
+                                                            <label htmlFor={genre.name} className="form-check-label">
+                                                                {genre.name}
+                                                            </label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                )}
+                                            />
+                                        </div>
+                                        : null
+                                    }
                                     <button type="submit" disabled={isSubmitting} className="btn btn-primary">
                                         Register
                                     </button>
