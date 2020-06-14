@@ -8,7 +8,7 @@ import RegisterModal from './registerModal.js';
 import LoginModal from './loginModal.js';
 import Users from './users.js';
 import SearchResults from './searchResults.js';
-import LikedArtistSongs from './likedArtistSongs.js';
+import Discovery from './discovery.js';
 
 class Main extends Component {
     constructor(props) {
@@ -27,7 +27,8 @@ class Main extends Component {
             query: '',
             resultSongs: [],
             resultArtistSongs: [],
-            likedArtistSongs: []
+            likedArtistSongs: [],
+            topSongsCountry: []
         };
     }
 
@@ -46,7 +47,8 @@ class Main extends Component {
             await this.getUsers();
             await this.getLikedSongs();
             await this.getFollowedUsers();      
-            await this.discoverLikedArtistSongs();      
+            await this.discoverLikedArtistSongs();    
+            await this.discoverTopSongsCountry();  
         }
     }
 
@@ -250,6 +252,28 @@ class Main extends Component {
         });
     }
 
+    discoverTopSongsCountry = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails ? this.state.userDetails.username : null
+            });
+            fetch('http://localhost:4000/discovery/topSongsCountry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => response.json())
+            .then(response => {
+                console.log('top songs country: ' + response.data);
+                this.setState({ topSongsCountry: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
+
     handlePlay = (songId, songName) => {
         let body = JSON.stringify({
             _songId: songId,
@@ -388,6 +412,7 @@ class Main extends Component {
                 await this.getQueue();
                 await this.getNowPlaying();
                 await this.getUsers();
+                await this.discoverTopSongsCountry();  
 
                 fetch('http://localhost:4000/neoUserAdd', {
                     method: 'POST',
@@ -445,6 +470,7 @@ class Main extends Component {
                     await this.getUsers();
                     await this.getFollowedUsers();        
                     await this.discoverLikedArtistSongs();    
+                    await this.discoverTopSongsCountry();  
                 });    
             } else {
                 window.alert(response.message);
@@ -498,6 +524,7 @@ class Main extends Component {
                                 console.log(this.state.likedSongs);
                                 await this.getTrendingSongs();
                                 await this.discoverLikedArtistSongs();
+                                await this.discoverTopSongsCountry();  
                             });
                         })
                         .catch(err => {
@@ -560,6 +587,7 @@ class Main extends Component {
                                 console.log(this.state.likedSongs);
                                 await this.getTrendingSongs();
                                 await this.discoverLikedArtistSongs();
+                                await this.discoverTopSongsCountry();  
                             });
                         })
                         .catch(err => {
@@ -728,8 +756,9 @@ class Main extends Component {
                         userDetails={this.state.userDetails}
                         handleSearch={this.handleSearch}
                     />
-                    <LikedArtistSongs
+                    <Discovery
                         likedArtistSongs={this.state.likedArtistSongs}
+                        topSongsCountry={this.state.topSongsCountry}
                         userDetails={this.state.userDetails}
                     />
                     <Users

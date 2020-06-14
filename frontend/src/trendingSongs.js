@@ -30,7 +30,7 @@ const TrendingSongs = (props) => {
         
         return (
             <div className="py-3">
-                <h2>Top 10 Trending Songs</h2>
+                <h2>Top 10 trending songs</h2>
                 <ul className="list-group list-group-horizontal overflow-auto">
                     {trendingSongs}
                 </ul>

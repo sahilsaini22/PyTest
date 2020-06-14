@@ -591,6 +591,62 @@ app.post('/discovery/artistSongs', async (req, res) => {
     }            
 });
 
+// Top 10 liked songs from the user's country
+app.post('/discovery/topSongsCountry', async (req, res) => {
+    try {            
+        let songs = [];
+        let allsongs = [];
+        let eliminate = []
+        const { username } = req.body;    
+        
+        if (username) {                
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();   
+                                               
+            await session.run('MATCH (u:User {name : $temp1 })-[:LIVES_IN]-(c:Country) -[:LIVES_IN]-(a:User)-[r:LIKES]->(t:Songs)RETURN t.name as RES,count(r) order by count(r) desc limit 10', {temp1: username})
+            .then(function (result) {    
+                console.log("(topSongsCountry) All songs:");            
+                result.records.forEach(function(record) {   
+                    console.log(record._fields[0]);                                                                       
+                    allsongs.push(record._fields[0]);                        
+                });                                
+            }) 
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+            
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)return s.name as Eliminate', {temp1: username})                            
+            .then(function (result) {                
+                console.log("(topSongsCountry) Exclude:");
+                result.records.forEach(function(record) {  
+                    eliminate.push(record._fields[0]);
+                    console.log(record._fields[0]);
+                });
+                songs = allsongs.filter(element => !eliminate.includes(element) );
+                if (songs.length > 10) {
+                    songs.splice(10);
+                }
+                console.log("(topSongsCountry) RESULT:")
+                songs.forEach(function(element) {  
+                    console.log(element);
+                });
+                if (songs) {
+                    res.status(200).json({data: songs});
+                } else {
+                    res.status(200).json({ data: null });
+                }
+                session.close();    
+            })                 
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err });
+    }    
+});
+
 // FUNCTIONS
 
 const getSong = async (id) => {
