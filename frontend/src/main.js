@@ -29,6 +29,7 @@ class Main extends Component {
             resultSongs: [],
             resultArtistSongs: [],
             likedArtistSongs: [],
+            likedGenreSongs: [],
             topSongsCountry: [],
             followedLikesSongs: []
         };
@@ -50,6 +51,7 @@ class Main extends Component {
             await this.getLikedSongs();
             await this.getFollowedUsers();      
             await this.discoverLikedArtistSongs();    
+            await this.discoverLikedGenreSongs();
             await this.discoverTopSongsCountry();  
             await this.getFollowedLikesSongs();
         }
@@ -277,6 +279,27 @@ class Main extends Component {
         });
     }
 
+    discoverLikedGenreSongs = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails ? this.state.userDetails.username : null
+            });
+            fetch('http://localhost:4000/discovery/genreSongs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => response.json())
+            .then(response => {
+                this.setState({ likedGenreSongs: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
+
     discoverTopSongsCountry = () => {
         return new Promise(resolve => {
             let body = JSON.stringify({
@@ -410,8 +433,6 @@ class Main extends Component {
         .catch(err => console.error(err));
     }
 
-    // TODO prevent same username reg
-
     handleRegister = (registerData) => {
         let body = JSON.stringify({
             username: registerData.username,
@@ -495,6 +516,7 @@ class Main extends Component {
                     await this.getUsers();
                     await this.getFollowedUsers();        
                     await this.discoverLikedArtistSongs();    
+                    await this.discoverLikedGenreSongs();
                     await this.discoverTopSongsCountry();  
                     await this.getFollowedLikesSongs();
                 });    
@@ -550,6 +572,7 @@ class Main extends Component {
                                 console.log(this.state.likedSongs);
                                 await this.getTrendingSongs();
                                 await this.discoverLikedArtistSongs();
+                                await this.discoverLikedGenreSongs();
                                 await this.discoverTopSongsCountry();  
                             });
                         })
@@ -613,6 +636,7 @@ class Main extends Component {
                                 console.log(this.state.likedSongs);
                                 await this.getTrendingSongs();
                                 await this.discoverLikedArtistSongs();
+                                await this.discoverLikedGenreSongs();
                                 await this.discoverTopSongsCountry();  
                             });
                         })
@@ -788,6 +812,7 @@ class Main extends Component {
                     />
                     <Discovery
                         likedArtistSongs={this.state.likedArtistSongs}
+                        likedGenreSongs={this.state.likedGenreSongs}
                         topSongsCountry={this.state.topSongsCountry}
                         userDetails={this.state.userDetails}
                     />

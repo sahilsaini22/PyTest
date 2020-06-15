@@ -620,6 +620,53 @@ app.post('/discovery/artistSongs', async (req, res) => {
     }            
 });
 
+//Songs of genres of songs liked by user
+app.post('/discovery/genreSongs', async (req, res) => {
+    try {            
+        let songs = [];
+        let allsongs = [];
+        let eliminate = [];
+        const { username } = req.body;    
+        
+        if (username) {                
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();   
+                                               
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)-[r:BELONGS_TO]->(g:Genres)-[x:BELONGS_TO]-(y:Songs)RETURN y.name, count(r) order by count(r) desc', {temp1: username})
+            .then(function (result) {    
+                result.records.forEach(function(record) {   
+                    allsongs.push(record._fields[0]);                        
+                });                                
+                console.log("All songs: " + allsongs);            
+            }) 
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+            
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)RETURN s.name AS Eliminate', {temp1: username})                            
+            .then(function (result) {                
+                result.records.forEach(function(record){  
+                    eliminate.push(record._fields[0]);
+                });
+                songs = allsongs.filter(element => !eliminate.includes(element) );
+                if (songs.length > 10) {
+                    songs.splice(10);
+                }
+                session.close();    
+                res.status(200).json({data: songs});
+            })       
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        } else {
+            res.status(200).json({ data: null })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }            
+});
+
 // Top 10 liked songs from the user's country
 app.post('/discovery/topSongsCountry', async (req, res) => {
     try {            
