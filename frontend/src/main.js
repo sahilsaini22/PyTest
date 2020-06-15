@@ -9,6 +9,7 @@ import LoginModal from './loginModal.js';
 import Users from './users.js';
 import SearchResults from './searchResults.js';
 import Discovery from './discovery.js';
+import FollowedLikesSongs from './followedLikesSongs.js';
 
 class Main extends Component {
     constructor(props) {
@@ -28,7 +29,8 @@ class Main extends Component {
             resultSongs: [],
             resultArtistSongs: [],
             likedArtistSongs: [],
-            topSongsCountry: []
+            topSongsCountry: [],
+            followedLikesSongs: []
         };
     }
 
@@ -49,6 +51,7 @@ class Main extends Component {
             await this.getFollowedUsers();      
             await this.discoverLikedArtistSongs();    
             await this.discoverTopSongsCountry();  
+            await this.getFollowedLikesSongs();
         }
     }
 
@@ -153,6 +156,28 @@ class Main extends Component {
             .then(response => {
                 console.log(response);
                 this.setState({ followedUsers: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
+
+    getFollowedLikesSongs = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username
+            });
+            fetch('http://localhost:4000/neoFollowedLikesSongs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => response.json())
+            .then(response => {
+                console.log(response);
+                this.setState({ followedLikesSongs: response.data }, () => { resolve() });
             })
             .catch(err => {
                 console.error(err);
@@ -471,6 +496,7 @@ class Main extends Component {
                     await this.getFollowedUsers();        
                     await this.discoverLikedArtistSongs();    
                     await this.discoverTopSongsCountry();  
+                    await this.getFollowedLikesSongs();
                 });    
             } else {
                 window.alert(response.message);
@@ -621,8 +647,9 @@ class Main extends Component {
             if (response.result === "success") {
                 this.setState((state) => ({
                     followedUsers: [...state.followedUsers, followedUser]
-                }), () => {
+                }), async () => {
                     console.log(this.state.followedUsers);
+                    await this.getFollowedLikesSongs();
                 });
             } else {
                 window.alert(response.message);
@@ -647,7 +674,10 @@ class Main extends Component {
             if (response.result === "success") {
                 this.setState((state) => ({
                     followedUsers: state.followedUsers.filter(name => name !== unfollowedUser)
-                }), () => console.log(this.state.followedUsers));
+                }), async () => {
+                    console.log(this.state.followedUsers);
+                    await this.getFollowedLikesSongs();
+                });
             } else {
                 window.alert(response.message);
             }
@@ -759,6 +789,10 @@ class Main extends Component {
                     <Discovery
                         likedArtistSongs={this.state.likedArtistSongs}
                         topSongsCountry={this.state.topSongsCountry}
+                        userDetails={this.state.userDetails}
+                    />
+                    <FollowedLikesSongs
+                        followedLikesSongs={this.state.followedLikesSongs}
                         userDetails={this.state.userDetails}
                     />
                     <Users

@@ -542,6 +542,35 @@ app.post('/removeFollowUser', async (req, res) => {
     }
 });  
 
+// Songs liked by users followed by the user
+app.post('/neoFollowedLikesSongs', async (req, res) => {
+    try {            
+        let recomm = [];
+        const { username } = req.body;    
+        if (username) {
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();                                
+            session.run('MATCH (u:User {name : $temp1}) -[:FOLLOWS]->(a:User)-[r:LIKES]->(t:Songs) return t.name AS Recommendation,COUNT(r) ORDER BY COUNT(r) DESC', {temp1: username})
+            .then(function (result) {                
+                result.records.forEach(function(record) {
+                    recomm.push(record._fields[0]);  
+                    console.log(record._fields[0]) ;                 
+                });
+                res.status(200).json({data: recomm});
+                session.close();
+            })          
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        } else {
+            res.status(200).json({ data: null })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }
+});
+
 // DISCOVERY
 
 //Songs of artist liked by user
