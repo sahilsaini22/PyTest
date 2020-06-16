@@ -51,6 +51,14 @@ const NowPlaying = (props) => {
                     <ul className="list-group list-group-horizontal overflow-auto my-1">
                         Play queue: {queue}
                     </ul>
+                    <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm ml-2"
+                        onClick={() => {props.handleClearQueue()}}
+                    >
+                        clear queue
+                    </button>
+
                     {/* {{#if nowPlaying}}
                     <p>nowPlaying: {{ nowPlaying }}</p>
                     {{/if}}

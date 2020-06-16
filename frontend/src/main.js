@@ -887,6 +887,29 @@ class Main extends Component {
         });
     }
 
+    handleClearQueue = () => {
+        let body = JSON.stringify({
+            _userId: this.state.userId
+        });
+        
+        fetch('http://localhost:4000/clearQueue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            console.log('nowplaying: ' + response.data);
+            this.setState({
+                queue: [],
+                nowPlaying: null
+            });
+        })
+        .catch(err => {
+            console.error(err);
+        });    
+    }
+
     render() {
         return (
             <>
@@ -976,6 +999,7 @@ class Main extends Component {
                     history={this.state.history}
                     handleSkip={this.handleSkip}
                     handlePrevious={this.handlePrevious}
+                    handleClearQueue={this.handleClearQueue}
                 />
             </>
         );

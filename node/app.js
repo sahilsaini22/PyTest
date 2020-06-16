@@ -209,6 +209,18 @@ app.get('/history/:_userId', async (req, res) => {
     });
 });
 
+app.post('/clearQueue', async (req, res) => {
+    const _userId = req.body._userId;
+    const userListKey = "user:" + _userId;
+    const queueListKey = "queue:" + _userId;
+    
+    //clear current queue and now playing
+    redisClient.DEL(queueListKey)
+    redisClient.HDEL(userListKey, "nowPlaying")
+
+    res.redirect(`/nowPlaying/${_userId}`);
+});
+
 app.get('/nowPlaying/:_userId', async (req, res) => {
     const _userId = req.params._userId;
     const listKey = "user:" + _userId;
