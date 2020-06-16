@@ -20,6 +20,7 @@ class Main extends Component {
             trendingSongs: [],
             trendingArtists: [],
             queue: [],
+            history: [],
             nowPlaying: null,
             userId: 'guest',
             userDetails: null,
@@ -46,7 +47,7 @@ class Main extends Component {
         await this.getSongs();
         await this.getTrendingSongs();
         await this.getTrendingArtists();
-        await this.getQueue();
+        await this.getQueueAndHistory();
         await this.getNowPlaying();
         if (this.state.userDetails) {
             await this.getUsers();
@@ -257,12 +258,22 @@ class Main extends Component {
         })
     }
 
-    getQueue = () => {
+    getQueueAndHistory = () => {
         return new Promise (resolve => {
             fetch(`http://localhost:4000/queue/${this.state.userId}`)
             .then(response => response.json())
             .then(response => {
-                this.setState({ queue: response.data }, () => { resolve() })
+                this.setState({ queue: response.data }, () => {
+                    fetch(`http://localhost:4000/history/${this.state.userId}`)
+                    .then(response => response.json())
+                    .then(response => {
+                        this.setState({ history: response.data }, () => { resolve() })
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        resolve();
+                    });    
+                })
             })
             .catch(err => {
                 console.error(err);
@@ -277,6 +288,29 @@ class Main extends Component {
             .then(response => response.json())
             .then(response => {
                 this.setState({ nowPlaying: response.data }, () => { resolve() })
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        })
+    }
+
+    addToHistory = (songObject) => {
+        return new Promise (resolve => {
+            let body = JSON.stringify({
+                _songId: songObject._id,
+                _userId: this.state.userId
+            });
+            fetch('http://localhost:4000/addToHistory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(async (response) => {
+                console.log(response);
+                await this.getQueueAndHistory();
+                resolve();
             })
             .catch(err => {
                 console.error(err);
@@ -364,7 +398,51 @@ class Main extends Component {
         .then(response => response.json())
         .then(response => {
             this.setState({ nowPlaying: response.data }, async () => {
-                await this.getQueue();
+                await this.getQueueAndHistory();
+                await this.getTrendingSongs();
+                await this.getSongArtist(songName).then((songArtists) => {
+                    songArtists.forEach(songArtist => {                    
+                        let incrementArtistBody = JSON.stringify({
+                            artist: songArtist,
+                            scoreIncrement: 1
+                        });
+                        fetch('http://localhost:4000/incrementArtistScore', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: incrementArtistBody
+                        })
+                        .then(response => {
+                            if (!response.ok) { console.error(response.message) }
+                            return response.json()
+                        })
+                        .then(async (response) => {
+                            await this.getTrendingArtists();                            
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });    
+                    });
+                });
+            })
+        })
+        .catch(err => console.error(err));
+    }
+
+    handleAddToQueue = (songId, songName) => {
+        let body = JSON.stringify({
+            _songId: songId,
+            _userId: this.state.userId,
+        });
+
+        fetch('http://localhost:4000/addToQueue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        })
+        .then(response => response.json())
+        .then(response => {
+            this.setState({ nowPlaying: response.data }, async () => {
+                await this.getQueueAndHistory();
                 await this.getTrendingSongs();
                 await this.getSongArtist(songName).then((songArtists) => {
                     songArtists.forEach(songArtist => {                    
@@ -411,7 +489,7 @@ class Main extends Component {
         .then(response => response.json())
         .then(response => {
             this.setState({ nowPlaying: response.data }, async () => {
-                await this.getSongArtist(songName).then((songArtists) => {
+                await this.getSongArtist(songName).then(async (songArtists) => {
                     songArtists.forEach(songArtist => {                    
                         let incrementArtistBody = JSON.stringify({
                             artist: songArtist,
@@ -427,12 +505,13 @@ class Main extends Component {
                             return response.json()
                         })
                         .then(async (response) => {
-                            await this.getTrendingArtists();                            
+                            await this.getTrendingArtists();     
                         })
                         .catch(err => {
                             console.error(err);
                         });    
                     });
+                    await this.addToHistory(this.state.queue[this.state.nowPlaying]);                           
                 });
             })            
         })
@@ -455,7 +534,9 @@ class Main extends Component {
         })
         .then(response => response.json())
         .then(response => {
-            this.setState({ nowPlaying: response.data })
+            this.setState({ nowPlaying: response.data }, async () => {
+                await this.addToHistory(this.state.queue[this.state.nowPlaying]);                           
+            })
         })
         .catch(err => console.error(err));
     }
@@ -492,7 +573,7 @@ class Main extends Component {
                     userId: response.data._id,
                     userDetails: response.data
                 }, async () => {
-                    await this.getQueue();
+                    await this.getQueueAndHistory();
                     await this.getNowPlaying();
                     await this.getUsers();
                     await this.discoverTopSongsCountry();  
@@ -549,7 +630,7 @@ class Main extends Component {
                     userDetails: response.payload
                 }, async () => {
                     window.$('#loginModal').modal('hide');
-                    await this.getQueue();
+                    await this.getQueueAndHistory();
                     await this.getNowPlaying();
                     await this.getLikedSongs();
                     await this.getSelectedGenreSongs();
@@ -788,7 +869,7 @@ class Main extends Component {
             likedSongs: [],
             followedUsers: []
         }, async () => {
-            await this.getQueue();
+            await this.getQueueAndHistory();
             await this.getNowPlaying();    
         });
     }
@@ -831,11 +912,13 @@ class Main extends Component {
 
                     <Songs
                         songs={this.state.songs}
+                        queue={this.state.queue}
                         likedSongs={this.state.likedSongs}
                         userDetails={this.state.userDetails}
                         handlePlay={this.handlePlay}
                         handleLike={this.handleLike}
                         handleRemoveLike={this.handleRemoveLike}
+                        handleAddToQueue={this.handleAddToQueue}
                     />
                     <SelectedGenreSongs 
                         selectedGenreSongs={this.state.selectedGenreSongs}
@@ -876,6 +959,7 @@ class Main extends Component {
                 <NowPlaying
                     nowPlaying={this.state.nowPlaying}
                     queue={this.state.queue}
+                    history={this.state.history}
                     handleSkip={this.handleSkip}
                     handlePrevious={this.handlePrevious}
                 />

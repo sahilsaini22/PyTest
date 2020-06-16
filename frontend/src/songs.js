@@ -13,6 +13,17 @@ const Songs = (props) => {
                     play
                 </button>
                 {
+                    props.queue && props.queue.length > 0 ?
+                    <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => {props.handleAddToQueue(_id, Song)}}
+                    >
+                        add to queue
+                    </button>
+                    : null
+                }
+                {
                     props.userDetails ? 
                     <button
                         type="button"

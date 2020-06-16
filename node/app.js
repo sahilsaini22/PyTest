@@ -169,6 +169,21 @@ app.get('/queue/:_userId', async (req, res) => {
     });
 });
 
+app.get('/history/:_userId', async (req, res) => {
+    const _userId = req.params._userId;
+    const historyListKey = "history:" + _userId;
+    redisClient.lrange(historyListKey, 0, -1, async (err, historyIDs) => {
+        const history = await Promise.all(historyIDs.map(songID => getSong(songID)));
+        if (history) {
+            return res.json({
+                data: history
+            });    
+        } else {
+            return null;
+        }
+    });
+});
+
 app.get('/nowPlaying/:_userId', async (req, res) => {
     const _userId = req.params._userId;
     const listKey = "user:" + _userId;
@@ -190,17 +205,50 @@ app.get('/song/:_id', async (req, res) => {
     }
 });
 
-app.post('/play', (req, res) => {
+// Add to queue
+app.post('/addToQueue', (req, res) => {
     const _songId = req.body._songId;
     const _userId = req.body._userId;
 
     const queueListKey = "queue:" + _userId;
     const userListKey = "user:" + _userId;
 
+    redisClient.rpush(queueListKey, _songId, (err, listLength) => {});
+
+    redisClient.zincrby(trendingSongsKey, 1, _songId);
+
+    res.redirect(`/nowPlaying/${_userId}`);
+});
+
+app.post('/addToHistory', (req, res) => {
+    const _songId = req.body._songId;
+    const _userId = req.body._userId;
+    const historyListKey = "history:" + _userId;
+    redisClient.rpush(historyListKey, _songId);
+    res.status(200).json({message: "Successfully added song to history"});
+});
+
+//Play now button
+app.post('/play', async (req, res) => {
+    const _songId = req.body._songId;
+    const _userId = req.body._userId;
+
+    const userListKey = "user:" + _userId;
+    const queueListKey = "queue:" + _userId;
+    const historyListKey = "history:" + _userId;
+    
+    //clear current queue
+    redisClient.DEL(queueListKey)
+
+    //add song to the queue
     redisClient.rpush(queueListKey, _songId, (err, listLength) => {
-        redisClient.hset(userListKey, "nowPlaying", listLength - 1);
+        redisClient.hset(userListKey, "nowPlaying", 0);
     });
 
+    //add song to history
+    redisClient.rpush(historyListKey, _songId);
+
+    //redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
     redisClient.zincrby(trendingSongsKey, 1, _songId);
 
     res.redirect(`/nowPlaying/${_userId}`);

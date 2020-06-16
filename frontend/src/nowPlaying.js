@@ -9,6 +9,12 @@ const NowPlaying = (props) => {
             </li>        
         );
 
+        let history = props.history.map(({_id, Song, Year}, index) => 
+            <li className="list-group-item list-group-item-action" key={_id + index}>
+                {Song} ({Year})
+            </li>        
+        );
+
         let skipButton = parseInt(props.nowPlaying) < props.queue.length - 1 ? (
             <button
                 type="button"
@@ -42,14 +48,19 @@ const NowPlaying = (props) => {
                     </div>
                 </div> 
                 <div className="container">
-                    <ul className="list-group list-group-horizontal overflow-auto">
-                        {queue}
+                    <ul className="list-group list-group-horizontal overflow-auto my-3">
+                        Play queue: {queue}
                     </ul>
                     {/* {{#if nowPlaying}}
                     <p>nowPlaying: {{ nowPlaying }}</p>
                     {{/if}}
                     <p>Now Playing: {{queue.0.Song}} ({{queue.0.Year}})</p> */}
                 </div> 
+                <div className="container">
+                    <ul className="list-group list-group-horizontal overflow-auto my-3">
+                        Play history: {history}
+                    </ul>
+                </div>
             </nav>
         );
     } else {
