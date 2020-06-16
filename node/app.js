@@ -402,6 +402,53 @@ app.post('/register', async (req, res) => {
     }
 });
 
+// Songs belonging to genre initially preferred by user
+app.post('/selectedGenreSongs', async (req, res) => {
+    try {            
+        var songs = [];
+        var allsongs = [];
+        var eliminate = [];
+        const { username } = req.body;    
+        
+        if (username) {                
+            const driver = neo4j.driver('bolt://localhost:7687',neo4j.auth.basic('neo4j','root'));
+            const session = driver.session();   
+                                               
+            await session.run('MATCH (u:User  {name : $temp1}) — [: PREFERS] —(g:Genres) — [r: BELONGS_TO] — (s:Songs)RETURN s.name AS songrecommendations', {temp1: username})
+            .then(function (result) {    
+                result.records.forEach(function(record){   
+                    allsongs.push(record._fields[0]);                        
+                });                                
+                console.log("All songs: " + allsongs);            
+            }) 
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+            
+            await session.run('MATCH (u:User {name : $temp1}) -[:LIKES]-(s:Songs)RETURN s.name AS Eliminate', {temp1: username})                            
+            .then(function (result) {                
+                result.records.forEach(function(record){  
+                    eliminate.push(record._fields[0]);
+                });
+                songs = allsongs.filter(element => !eliminate.includes(element) );
+                if (songs.length > 10) {
+                    songs.splice(10);
+                }
+                session.close();    
+                res.status(200).json({data: songs});
+            })       
+            .catch((err) => {
+                res.status(500).json({ message: err })
+            })
+        } else {
+            res.status(200).json({ data: null })
+        }
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }            
+});
+
 app.post('/login', async (req, res) => {
     const userData = await client.db("MUSICDB").collection("users").findOne({ username: req.body.username });
     if (userData) {

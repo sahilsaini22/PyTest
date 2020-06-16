@@ -10,6 +10,7 @@ import Users from './users.js';
 import SearchResults from './searchResults.js';
 import Discovery from './discovery.js';
 import FollowedLikesSongs from './followedLikesSongs.js';
+import SelectedGenreSongs from './selectedGenreSongs.js';
 
 class Main extends Component {
     constructor(props) {
@@ -31,7 +32,8 @@ class Main extends Component {
             likedArtistSongs: [],
             likedGenreSongs: [],
             topSongsCountry: [],
-            followedLikesSongs: []
+            followedLikesSongs: [],
+            selectedGenreSongs: []
         };
     }
 
@@ -49,6 +51,7 @@ class Main extends Component {
         if (this.state.userDetails) {
             await this.getUsers();
             await this.getLikedSongs();
+            await this.getSelectedGenreSongs();
             await this.getFollowedUsers();      
             await this.discoverLikedArtistSongs();    
             await this.discoverLikedGenreSongs();
@@ -143,6 +146,30 @@ class Main extends Component {
         });
     }
 
+    getSelectedGenreSongs = () => {
+        return new Promise(resolve => {
+            let body = JSON.stringify({
+                username: this.state.userDetails.username
+            });
+            fetch('http://localhost:4000/selectedGenreSongs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            })
+            .then(response => {
+                if (!response.ok) { console.error(response.message) }
+                return response.json()
+            })
+            .then(response => {
+                console.log(response);
+                this.setState({ selectedGenreSongs: response.data }, () => { resolve() });
+            })
+            .catch(err => {
+                console.error(err);
+                resolve();
+            });    
+        });
+    }
 
     getFollowedUsers = () => {
         return new Promise(resolve => {
@@ -485,8 +512,9 @@ class Main extends Component {
                                 body: body
                             })
                             .then(response => response.json())
-                            .then(response => {
+                            .then(async (response) => {
                                 console.log(response);
+                                await this.getSelectedGenreSongs();
                             })
                             .catch(err => console.error(err));    
                         }
@@ -524,6 +552,7 @@ class Main extends Component {
                     await this.getQueue();
                     await this.getNowPlaying();
                     await this.getLikedSongs();
+                    await this.getSelectedGenreSongs();
                     await this.getUsers();
                     await this.getFollowedUsers();        
                     await this.discoverLikedArtistSongs();    
@@ -807,6 +836,10 @@ class Main extends Component {
                         handlePlay={this.handlePlay}
                         handleLike={this.handleLike}
                         handleRemoveLike={this.handleRemoveLike}
+                    />
+                    <SelectedGenreSongs 
+                        selectedGenreSongs={this.state.selectedGenreSongs}
+                        userDetails={this.state.userDetails}
                     />
                     <TrendingSongs
                         trendingSongs={this.state.trendingSongs}
