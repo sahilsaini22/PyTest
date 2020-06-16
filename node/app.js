@@ -370,28 +370,36 @@ app.post('/removeLikeSong', (req, res) => {
 
 app.post('/register', async (req, res) => {
     const registerData = req.body;
-    bcrypt.hash(registerData.password, saltRounds, async function (err, hash) {
-        const resultUser = await client.db("MUSICDB").collection("users").insertOne({
-            username: registerData.username,
-            password: hash,
-            role: registerData.role,
-            country: registerData.country
-        });
-        console.log(`New user created with the following id: ${resultUser.insertedId}`);
-        const resultUserObject = resultUser.ops[0];
 
-        const payload = {
-            _id: resultUser.insertedId,
-            username: resultUserObject.username,
-            role: resultUserObject.role,
-            country: resultUserObject.country    
-        };
-        const token = jwt.sign(payload);
-        return res.json({
-            data: payload,
-            token
-        });
-    });
+    const existingUsername = await client.db("MUSICDB").collection("users").findOne({ username: registerData.username });
+    console.log('existing username: ' + existingUsername);
+    if (existingUsername === null) {
+        bcrypt.hash(registerData.password, saltRounds, async function (err, hash) {
+            const resultUser = await client.db("MUSICDB").collection("users").insertOne({
+                username: registerData.username,
+                password: hash,
+                role: registerData.role,
+                country: registerData.country
+            });
+            console.log(`New user created with the following id: ${resultUser.insertedId}`);
+            const resultUserObject = resultUser.ops[0];
+    
+            const payload = {
+                _id: resultUser.insertedId,
+                username: resultUserObject.username,
+                role: resultUserObject.role,
+                country: resultUserObject.country    
+            };
+            const token = jwt.sign(payload);
+
+            res.status(200).json({ 
+                data: payload,
+                token
+            });
+        });    
+    } else {
+        res.status(500).json({ message: "Username already exists." });
+    }
 });
 
 app.post('/login', async (req, res) => {

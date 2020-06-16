@@ -447,43 +447,54 @@ class Main extends Component {
             headers: { 'Content-Type': 'application/json' },
             body: body
         })
-        .then(response => response.json())
         .then(response => {
-            console.log(response);
-            localStorage.setItem("token", response.token);
-            this.setState({
-                userId: response.data._id,
-                userDetails: response.data
-            }, async () => {
-                await this.getQueue();
-                await this.getNowPlaying();
-                await this.getUsers();
-                await this.discoverTopSongsCountry();  
-
-                fetch('http://localhost:4000/neoUserAdd', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: body
-                })
-                .then(response => response.json())
-                .then(response => {
-                    console.log(response);
-                    if (registerData.likedGenres && registerData.likedGenres.length > 0) {
-                        fetch('http://localhost:4000/neoGenreAdd', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: body
-                        })
-                        .then(response => response.json())
-                        .then(response => {
-                            console.log(response);
-                        })
-                        .catch(err => console.error(err));    
-                    }
-                    window.$('#registerModal').modal('hide');
-                })
-                .catch(err => console.error(err));
-            });
+            if (!response.ok) {
+                response.json().then(error => {
+                    console.error(error);
+                    window.alert(error.message);    
+                });
+            } else {
+                return response.json()
+            }
+        })
+        .then(response => {
+            if (response) {
+                console.log(response);
+                localStorage.setItem("token", response.token);
+                this.setState({
+                    userId: response.data._id,
+                    userDetails: response.data
+                }, async () => {
+                    await this.getQueue();
+                    await this.getNowPlaying();
+                    await this.getUsers();
+                    await this.discoverTopSongsCountry();  
+    
+                    fetch('http://localhost:4000/neoUserAdd', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: body
+                    })
+                    .then(response => response.json())
+                    .then(response => {
+                        console.log(response);
+                        if (registerData.likedGenres && registerData.likedGenres.length > 0) {
+                            fetch('http://localhost:4000/neoGenreAdd', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: body
+                            })
+                            .then(response => response.json())
+                            .then(response => {
+                                console.log(response);
+                            })
+                            .catch(err => console.error(err));    
+                        }
+                        window.$('#registerModal').modal('hide');
+                    })
+                    .catch(err => console.error(err));
+                });    
+            }
         })
         .catch(err => console.error(err));
     }
