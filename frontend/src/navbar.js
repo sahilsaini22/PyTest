@@ -53,7 +53,7 @@ class Navbar extends Component {
                             {({ isSubmitting }) => (
                                 <Form className="form-inline my-2 my-lg-0">
                                     <div className="form-group">
-                                        <Field type="search" name="query" placeholder="Search songs, artists" className="form-control mr-sm-2 width-320" />
+                                        <Field type="search" name="query" placeholder="Search songs, artists, genres" className="form-control mr-sm-2 width-320" />
                                     </div>
                                     <button type="submit" disabled={isSubmitting} className="btn btn-outline-secondary my-2 my-sm-0">
                                         Search

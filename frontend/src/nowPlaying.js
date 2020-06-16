@@ -18,7 +18,7 @@ const NowPlaying = (props) => {
         let skipButton = parseInt(props.nowPlaying) < props.queue.length - 1 ? (
             <button
                 type="button"
-                className="btn btn-outline-secondary"
+                className="btn btn-outline-secondary btn-sm ml-2"
                 onClick={() => {props.handleSkip(nowPlaying._id, nowPlaying.Song)}}
             >
                 skip
@@ -28,7 +28,7 @@ const NowPlaying = (props) => {
         let previousButton = parseInt(props.nowPlaying) > 0 ? (
             <button
                 type="button"
-                className="btn btn-outline-secondary"
+                className="btn btn-outline-secondary btn-sm mr-2"
                 onClick={() => {props.handlePrevious(nowPlaying._id)}}
             >
                 previous
@@ -48,7 +48,7 @@ const NowPlaying = (props) => {
                     </div>
                 </div> 
                 <div className="container">
-                    <ul className="list-group list-group-horizontal overflow-auto my-3">
+                    <ul className="list-group list-group-horizontal overflow-auto my-1">
                         Play queue: {queue}
                     </ul>
                     {/* {{#if nowPlaying}}
@@ -57,7 +57,7 @@ const NowPlaying = (props) => {
                     <p>Now Playing: {{queue.0.Song}} ({{queue.0.Year}})</p> */}
                 </div> 
                 <div className="container">
-                    <ul className="list-group list-group-horizontal overflow-auto my-3">
+                    <ul className="list-group list-group-horizontal overflow-auto my-1">
                         Play history: {history}
                     </ul>
                 </div>

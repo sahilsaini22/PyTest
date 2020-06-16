@@ -30,6 +30,7 @@ class Main extends Component {
             query: '',
             resultSongs: [],
             resultArtistSongs: [],
+            resultGenreSongs: [],
             likedArtistSongs: [],
             likedGenreSongs: [],
             topSongsCountry: [],
@@ -847,8 +848,20 @@ class Main extends Component {
                     this.setState({
                         resultArtistSongs: response.data
                     }, async () => {
-                        await this.getLikedSongs();
-                        window.scrollTo(0,0);
+                        fetch(`http://localhost:4000/genreSongs/${searchQuery}`)
+                        .then(response => response.json())
+                        .then(response => {
+                            console.log(response);
+                            this.setState({
+                                resultGenreSongs: response.data
+                            }, async () => {                                
+                                await this.getLikedSongs();
+                                window.scrollTo(0,0);
+                            });
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });            
                     });
                 })
                 .catch(err => {
@@ -894,7 +907,8 @@ class Main extends Component {
                         handleLike={this.handleLike}
                         handleRemoveLike={this.handleRemoveLike}  
                         resultSongs={this.state.resultSongs}
-                        resultArtistSongs={this.state.resultArtistSongs}              
+                        resultArtistSongs={this.state.resultArtistSongs}     
+                        resultGenreSongs={this.state.resultGenreSongs}         
                         query={this.state.query}
                     />
                     {/* <!-- {{#if queue}}

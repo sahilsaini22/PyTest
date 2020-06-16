@@ -116,6 +116,31 @@ app.get('/artistSongs/:artistName', async (req, res) => {
     }
 });
 
+app.get('/genreSongs/:genreName', async (req, res) => {
+    const genreName = req.params.genreName;
+    try {        
+        let songs = [];                
+        const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j','root'));
+        const session = driver.session();        
+        session.run('MATCH (s:Songs) -[:BELONGS_TO]->(g:Genres) WHERE toLower(g.genre) = toLower($temp1) RETURN s.name', {temp1: genreName})
+        .then(async (result) => {                                     
+            result.records.forEach(function(record) {                                  
+                songs.push(record._fields[0]);                        
+            });      
+            console.log('genre: ' + genreName + ', songs: ' + songs );
+            session.close();
+            const songsAsObject = await Promise.all(songs.map(songTitle => getSongFromTitle(songTitle)))
+            res.status(200).json({data: songsAsObject});
+        })
+        .catch((err) => {
+            res.status(500).json({ message: err })
+        })
+    }
+    catch (err) {
+        res.status(500).json({ message: err })
+    }
+});
+
 app.get('/users', async (req, res) => {
     const _users = await client.db("MUSICDB").collection("users").find({ role: "user" });
     const users = await _users.toArray();
