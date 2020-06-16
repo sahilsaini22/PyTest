@@ -2,6 +2,15 @@ import React from 'react';
 
 const Songs = (props) => {
     if (props) {
+        let likedSongs;
+        if (props.likedSongs && props.likedSongs.length > 0) {
+            likedSongs = props.likedSongs.map((Song) => 
+                <li className="list-group-item list-group-item-action" key={Song}>
+                    {Song}
+                </li>        
+            );
+        }
+
         let songs = props.songs.map(({_id, Song, Year}) => 
             <li className="list-group-item list-group-item-action" key={_id}>
                 {Song} ({Year})
@@ -47,6 +56,16 @@ const Songs = (props) => {
                         {songs}
                     </ul>
                 </div>
+                {
+                    props.likedSongs && props.likedSongs.length > 0 ?
+                    <>
+                        <h2>Playlist: your liked songs</h2>
+                        <ul className="list-group list-group-horizontal overflow-auto">
+                            {likedSongs}
+                        </ul>
+                    </>
+                    : null              
+                }
                 {
                     !props.userDetails ? 
                     <div className="py-3">

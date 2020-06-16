@@ -688,15 +688,17 @@ class Main extends Component {
                             return response.json()
                         })
                         .then(response => {
-                            this.setState((state) => ({
-                                likedSongs: [...state.likedSongs, songName]
-                            }), async () => {
-                                console.log(this.state.likedSongs);
-                                await this.getTrendingSongs();
-                                await this.discoverLikedArtistSongs();
-                                await this.discoverLikedGenreSongs();
-                                await this.discoverTopSongsCountry();  
-                            });
+                            if (!this.state.likedSongs.includes(songName)) {
+                                this.setState((state) => ({
+                                    likedSongs: [...state.likedSongs, songName]
+                                }), async () => {
+                                    console.log(this.state.likedSongs);
+                                    await this.getTrendingSongs();
+                                    await this.discoverLikedArtistSongs();
+                                    await this.discoverLikedGenreSongs();
+                                    await this.discoverTopSongsCountry();  
+                                });    
+                            }
                         })
                         .catch(err => {
                             console.error(err);
