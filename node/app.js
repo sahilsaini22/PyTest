@@ -246,12 +246,12 @@ app.get('/song/:_id', async (req, res) => {
 app.post('/addToQueue', (req, res) => {
     const _songId = req.body._songId;
     const _userId = req.body._userId;
-
     const queueListKey = "queue:" + _userId;
-    const userListKey = "user:" + _userId;
 
-    redisClient.rpush(queueListKey, _songId, (err, listLength) => {});
+    // push song to queue
+    redisClient.rpush(queueListKey, _songId);
 
+    // increment song popularity score +1
     redisClient.zincrby(trendingSongsKey, 1, _songId);
 
     res.redirect(`/nowPlaying/${_userId}`);
@@ -265,7 +265,7 @@ app.post('/addToHistory', (req, res) => {
     res.status(200).json({message: "Successfully added song to history"});
 });
 
-//Play now button
+//Play button
 app.post('/play', async (req, res) => {
     const _songId = req.body._songId;
     const _userId = req.body._userId;
@@ -274,18 +274,18 @@ app.post('/play', async (req, res) => {
     const queueListKey = "queue:" + _userId;
     const historyListKey = "history:" + _userId;
     
-    //clear current queue
+    // clear current queue
     redisClient.DEL(queueListKey)
 
-    //add song to the queue
+    // add song to the queue
     redisClient.rpush(queueListKey, _songId, (err, listLength) => {
         redisClient.hset(userListKey, "nowPlaying", 0);
     });
 
-    //add song to history
+    // add song to history
     redisClient.rpush(historyListKey, _songId);
 
-    //redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
+    // increment song popularity score +1
     redisClient.zincrby(trendingSongsKey, 1, _songId);
 
     res.redirect(`/nowPlaying/${_userId}`);
@@ -344,7 +344,10 @@ app.post('/skip', (req, res) => {
     const nowPlaying = parseInt(req.body.nowPlaying);
     const userListKey = "user:" + _userId;
 
+    // increment nowPlaying +1
     redisClient.hset(userListKey, "nowPlaying", nowPlaying + 1, (err, res) => {});
+
+    // increment song popularity score -1
     redisClient.zincrby(trendingSongsKey, -1, _songId, (err, res) => {});
 
     res.redirect(`/nowPlaying/${_userId}`);
@@ -377,7 +380,7 @@ app.post('/likedSongs', async (req, res) => {
                 res.status(200).json({data: likedSongs});
             })          
         } else {
-            res.status(500).json({ message: "No username provided" })
+            res.status(200).json({data: likedSongs});
         }
     }
     catch (err) {
@@ -713,7 +716,7 @@ app.post('/neoFollowedLikesSongs', async (req, res) => {
 
 // DISCOVERY
 
-//Songs of artist liked by user
+//Songs of artists of songs liked by user
 app.post('/discovery/artistSongs', async (req, res) => {
     try {            
         var songs = [];

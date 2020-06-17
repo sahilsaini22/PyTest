@@ -126,7 +126,7 @@ class Main extends Component {
     getLikedSongs = () => {
         return new Promise(resolve => {
             let body = JSON.stringify({
-                username: this.state.userDetails.username
+                username: this.state.userDetails ? this.state.userDetails.username : null
             });
             fetch('http://localhost:4000/likedSongs', {
                 method: 'POST',
